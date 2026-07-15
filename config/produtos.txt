@@ -1,0 +1,4 @@
+Carne Temperada;12345/PR-SIF;Refrigerado (até 4°C);3
+Queijo;;Refrigerado (até 4°C);2
+Frango;;Refrigerado (até 4°C);3
+Maionese;;Refrigerado (até 4°C);1

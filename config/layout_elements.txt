@@ -1,0 +1,16 @@
+TEXTO;Produto:;30;45;0;12;true;1
+TAG;{Produto};30;70;0;18;true;1
+LINHA;;30;85;450;0;false;2
+TEXTO;S.I.F.:;30;110;0;12;false;1
+TAG;{Sif};90;110;0;12;false;1
+TEXTO;Armazenamento:;30;142;0;12;false;1
+TAG;{Armazenamento};150;135;0;12;false;1
+LINHA;;30;150;450;0;false;1
+TEXTO;Fabricação:;30;175;0;12;false;1
+TAG;{Fabricacao};150;175;0;12;false;1
+TEXTO;Validade:;30;210;0;12;true;1
+TAG;{Validade};110;212;0;20;true;1
+LINHA;;30;235;450;0;false;1
+TEXTO;Responsável:;30;265;0;12;false;1
+TAG;{Responsavel};140;265;0;12;false;1
+LINHA;;30;119;450;0;false;2
