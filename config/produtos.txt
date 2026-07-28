@@ -1,4 +1,33 @@
-Carne Temperada;12345/PR-SIF;Refrigerado (até 4°C);3
-Queijo;;Refrigerado (até 4°C);2
+Mussarela;171;Refrigerado (até 4°C);3
+Carne;;Refrigerado (até 4°C);3
 Frango;;Refrigerado (até 4°C);3
-Maionese;;Refrigerado (até 4°C);1
+Calabresa;1466;Refrigerado (até 4°C);3
+Pepperoni;;Refrigerado (até 4°C);3
+4 Queijos;;Refrigerado (até 4°C);3
+Atum;2087;Refrigerado (até 4°C);3
+Escarola;;Refrigerado (até 4°C);3
+Bacon;5420;Refrigerado (até 4°C);3
+Filé frango;;Refrigerado (até 4°C);3
+Lagarto;;Refrigerado (até 4°C);3
+Lombo;772;Refrigerado (até 4°C);3
+Filé mignon;;Refrigerado (até 4°C);3
+Ricota;1837;Refrigerado (até 4°C);3
+Brócolis;;Refrigerado (até 4°C);3
+Provolone;816;Refrigerado (até 4°C);3
+Kibe;;Refrigerado (até 4°C);3
+Coxinha;;Refrigerado (até 4°C);3
+Peito Peru;237;Refrigerado (até 4°C);3
+Palmito;;Refrigerado (até 4°C);3
+Bauru;;Refrigerado (até 4°C);3
+Portuguesa;;Refrigerado (até 4°C);3
+Presunto;60;Refrigerado (até 4°C);3
+Rosbife;;Refrigerado (até 4°C);3
+Salame;772;Refrigerado (até 4°C);3
+Carne Seca;;Refrigerado (até 4°C);3
+Goiabada;;Refrigerado (até 4°C);14
+Azeitona;;Refrigerado (até 4°C);9
+Leite Condensado;3810;Refrigerado (até 4°C);9
+Doce Leite;1093;Refrigerado (até 4°C);29
+Tomate Seco;;Refrigerado (até 4°C);29
+Leite;;Refrigerado (até 4°C);1
+Rucula;;Refrigerado (até 4°C);2

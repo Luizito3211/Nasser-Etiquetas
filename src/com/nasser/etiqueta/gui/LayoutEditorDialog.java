@@ -6,10 +6,16 @@ import com.nasser.etiqueta.service.PersistenceService;
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import javax.swing.border.TitledBorder;
+import javax.swing.filechooser.FileNameExtensionFilter;
+import javax.imageio.ImageIO;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.awt.image.BufferedImage;
+import java.io.File;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Editor visual de layout de etiquetas de 60x40mm (480x320 pixels).
@@ -34,6 +40,7 @@ public class LayoutEditorDialog extends JDialog {
     private JButton btnAddText;
     private JButton btnAddTag;
     private JButton btnAddLine;
+    private JButton btnAddImage;
 
     // Componentes do Canvas e Editor
     private LabelCanvas canvasPanel;
@@ -47,13 +54,22 @@ public class LayoutEditorDialog extends JDialog {
     // Controles de Texto
     private JPanel textPropertiesPanel;
     private JTextField tfTextContent;
-    private JComboBox<String> cbFontSize;
+    private JSpinner spinFontSize;
     private JCheckBox chkBold;
 
     // Controles de Linha
     private JPanel linePropertiesPanel;
     private JSpinner spinX2;
     private JSpinner spinThickness;
+
+    // Controles de Imagem
+    private JPanel imagePropertiesPanel;
+    private JSpinner spinImgWidth;
+    private JSpinner spinImgHeight;
+    private JButton btnChangeImage;
+
+    // Cache de imagens em memória para performance do canvas
+    private final Map<String, BufferedImage> imageCache = new HashMap<>();
 
     private JButton btnSalvar;
     private JButton btnFechar;
@@ -109,13 +125,17 @@ public class LayoutEditorDialog extends JDialog {
         btnAddLine.setFont(new Font("SansSerif", Font.BOLD, 12));
         DarkThemeHelper.styleButton(btnAddLine, DarkThemeHelper.COMPONENT_BG, DarkThemeHelper.TEXT_PRIMARY);
 
+        btnAddImage = new JButton("+ Imagem");
+        btnAddImage.setFont(new Font("SansSerif", Font.BOLD, 12));
+        DarkThemeHelper.styleButton(btnAddImage, DarkThemeHelper.COMPONENT_BG, DarkThemeHelper.TEXT_PRIMARY);
+
         // O Canvas 480x320
         canvasPanel = new LabelCanvas();
 
         // Painel de Propriedades Comuns
         String[] tags = new String[elements.size()];
         for (int i = 0; i < elements.size(); i++) {
-            tags[i] = elements.get(i).getTipo() + ": " + (elements.get(i).getConteudo() != null ? elements.get(i).getConteudo() : "Linha");
+            tags[i] = elements.get(i).getTipo() + ": " + (elements.get(i).getConteudo() != null ? elements.get(i).getConteudo() : "Elemento");
         }
         cbElementsSelector = new JComboBox<>(tags);
         cbElementsSelector.setFont(new Font("SansSerif", Font.PLAIN, 12));
@@ -139,10 +159,8 @@ public class LayoutEditorDialog extends JDialog {
         tfTextContent.setFont(new Font("SansSerif", Font.PLAIN, 12));
         DarkThemeHelper.styleTextField(tfTextContent);
 
-        String[] tamanhosFontes = {"Pequeno (12)", "Médio (16)", "Grande (20)", "Extra Grande (26)"};
-        cbFontSize = new JComboBox<>(tamanhosFontes);
-        cbFontSize.setFont(new Font("SansSerif", Font.PLAIN, 12));
-        DarkThemeHelper.styleComboBox(cbFontSize);
+        spinFontSize = new JSpinner(new SpinnerNumberModel(12, 6, 72, 1));
+        DarkThemeHelper.styleSpinner(spinFontSize);
 
         chkBold = new JCheckBox("Texto em Negrito");
         chkBold.setFont(new Font("SansSerif", Font.BOLD, 12));
@@ -158,6 +176,20 @@ public class LayoutEditorDialog extends JDialog {
 
         spinThickness = new JSpinner(new SpinnerNumberModel(2, 1, 10, 1));
         DarkThemeHelper.styleSpinner(spinThickness);
+
+        // --- Painel Propriedades de Imagem ---
+        imagePropertiesPanel = new JPanel(new GridBagLayout());
+        imagePropertiesPanel.setOpaque(false);
+
+        spinImgWidth = new JSpinner(new SpinnerNumberModel(100, 10, 480, 1));
+        DarkThemeHelper.styleSpinner(spinImgWidth);
+
+        spinImgHeight = new JSpinner(new SpinnerNumberModel(100, 10, 320, 1));
+        DarkThemeHelper.styleSpinner(spinImgHeight);
+
+        btnChangeImage = new JButton("Alterar Imagem...");
+        btnChangeImage.setFont(new Font("SansSerif", Font.PLAIN, 12));
+        DarkThemeHelper.styleButton(btnChangeImage, DarkThemeHelper.COMPONENT_BG, DarkThemeHelper.TEXT_PRIMARY);
 
         // Rodapé: Ações
         btnSalvar = new JButton("Salvar Layout Visual");
@@ -218,6 +250,7 @@ public class LayoutEditorDialog extends JDialog {
         toolsPanel.add(btnAddText);
         toolsPanel.add(btnAddTag);
         toolsPanel.add(btnAddLine);
+        toolsPanel.add(btnAddImage);
         topPanel.add(toolsPanel, BorderLayout.CENTER);
 
         contentPanel.add(topPanel, BorderLayout.NORTH);
@@ -309,9 +342,15 @@ public class LayoutEditorDialog extends JDialog {
 
         tGbc.gridx = 0;
         tGbc.gridy = 1;
-        tGbc.gridwidth = 2;
+        tGbc.gridwidth = 1;
+        tGbc.weightx = 0.0;
+        JLabel lblFontSize = new JLabel("Fonte (pt):");
+        DarkThemeHelper.styleLabel(lblFontSize, DarkThemeHelper.TEXT_PRIMARY, Font.PLAIN, 12);
+        textPropertiesPanel.add(lblFontSize, tGbc);
+
+        tGbc.gridx = 1;
         tGbc.weightx = 1.0;
-        textPropertiesPanel.add(cbFontSize, tGbc);
+        textPropertiesPanel.add(spinFontSize, tGbc);
 
         tGbc.gridy = 2;
         textPropertiesPanel.add(chkBold, tGbc);
@@ -343,6 +382,38 @@ public class LayoutEditorDialog extends JDialog {
         lGbc.weightx = 1.0;
         linePropertiesPanel.add(spinThickness, lGbc);
 
+        // Subpainel Dinâmico: Imagem
+        GridBagConstraints imGbc = new GridBagConstraints();
+        imGbc.fill = GridBagConstraints.HORIZONTAL;
+        imGbc.insets = new Insets(4, 4, 4, 4);
+
+        imGbc.gridx = 0;
+        imGbc.gridy = 0;
+        imGbc.weightx = 0.0;
+        JLabel lblWidth = new JLabel("Largura (px):");
+        DarkThemeHelper.styleLabel(lblWidth, DarkThemeHelper.TEXT_PRIMARY, Font.PLAIN, 12);
+        imagePropertiesPanel.add(lblWidth, imGbc);
+
+        imGbc.gridx = 1;
+        imGbc.weightx = 1.0;
+        imagePropertiesPanel.add(spinImgWidth, imGbc);
+
+        imGbc.gridx = 0;
+        imGbc.gridy = 1;
+        imGbc.weightx = 0.0;
+        JLabel lblHeight = new JLabel("Altura (px):");
+        DarkThemeHelper.styleLabel(lblHeight, DarkThemeHelper.TEXT_PRIMARY, Font.PLAIN, 12);
+        imagePropertiesPanel.add(lblHeight, imGbc);
+
+        imGbc.gridx = 1;
+        imGbc.weightx = 1.0;
+        imagePropertiesPanel.add(spinImgHeight, imGbc);
+
+        imGbc.gridx = 0;
+        imGbc.gridy = 2;
+        imGbc.gridwidth = 2;
+        imagePropertiesPanel.add(btnChangeImage, imGbc);
+
         // Adiciona os subpainéis dinâmicos
         cGbc.gridx = 0;
         cGbc.gridy = row++;
@@ -352,6 +423,9 @@ public class LayoutEditorDialog extends JDialog {
 
         cGbc.gridy = row++;
         controlPanel.add(linePropertiesPanel, cGbc);
+
+        cGbc.gridy = row++;
+        controlPanel.add(imagePropertiesPanel, cGbc);
 
         // Excluir Elemento
         cGbc.gridy = row++;
@@ -395,6 +469,33 @@ public class LayoutEditorDialog extends JDialog {
 
         btnAddLine.addActionListener(e -> {
             adicionarElemento(new ElementoLayout("LINHA", "", 30, 120, 450, 0, false, 2));
+        });
+
+        btnAddImage.addActionListener(e -> {
+            JFileChooser fc = new JFileChooser();
+            fc.setDialogTitle("Selecionar Imagem para a Etiqueta");
+            fc.setFileFilter(new FileNameExtensionFilter("Imagens (PNG, JPG, BMP)", "png", "jpg", "jpeg", "bmp"));
+            int res = fc.showOpenDialog(this);
+            if (res == JFileChooser.APPROVE_OPTION) {
+                File file = fc.getSelectedFile();
+                int w = 100;
+                int h = 100;
+                try {
+                    BufferedImage img = ImageIO.read(file);
+                    if (img != null) {
+                        w = img.getWidth();
+                        h = img.getHeight();
+                        if (w > 150 || h > 150) {
+                            double scale = Math.min(150.0 / w, 150.0 / h);
+                            w = Math.max(20, (int) (w * scale));
+                            h = Math.max(20, (int) (h * scale));
+                        }
+                    }
+                } catch (Exception ex) {
+                    System.err.println("Erro ao ler dimensões da imagem: " + ex.getMessage());
+                }
+                adicionarElemento(new ElementoLayout("IMAGEM", file.getAbsolutePath(), 180, 100, w, 0, false, h));
+            }
         });
 
         // Ação de Excluir
@@ -444,6 +545,50 @@ public class LayoutEditorDialog extends JDialog {
             canvasPanel.repaint();
         });
 
+        spinImgWidth.addChangeListener(e -> {
+            if (updatingControls || selectedElement == null) return;
+            selectedElement.setX2((Integer) spinImgWidth.getValue());
+            canvasPanel.repaint();
+        });
+
+        spinImgHeight.addChangeListener(e -> {
+            if (updatingControls || selectedElement == null) return;
+            selectedElement.setThickness((Integer) spinImgHeight.getValue());
+            canvasPanel.repaint();
+        });
+
+        btnChangeImage.addActionListener(e -> {
+            if (selectedElement == null || !"IMAGEM".equals(selectedElement.getTipo())) return;
+            JFileChooser fc = new JFileChooser();
+            fc.setDialogTitle("Alterar Imagem da Etiqueta");
+            fc.setFileFilter(new FileNameExtensionFilter("Imagens (PNG, JPG, BMP)", "png", "jpg", "jpeg", "bmp"));
+            int res = fc.showOpenDialog(this);
+            if (res == JFileChooser.APPROVE_OPTION) {
+                File file = fc.getSelectedFile();
+                selectedElement.setConteudo(file.getAbsolutePath());
+                try {
+                    BufferedImage img = ImageIO.read(file);
+                    if (img != null) {
+                        int w = img.getWidth();
+                        int h = img.getHeight();
+                        if (w > 150 || h > 150) {
+                            double scale = Math.min(150.0 / w, 150.0 / h);
+                            w = Math.max(20, (int) (w * scale));
+                            h = Math.max(20, (int) (h * scale));
+                        }
+                        selectedElement.setX2(w);
+                        selectedElement.setThickness(h);
+                        spinImgWidth.setValue(w);
+                        spinImgHeight.setValue(h);
+                    }
+                } catch (Exception ex) {
+                    System.err.println("Erro ao alterar imagem: " + ex.getMessage());
+                }
+                rebuildSelectorList();
+                canvasPanel.repaint();
+            }
+        });
+
         // Ações de texto em tempo real
         tfTextContent.addCaretListener(e -> {
             if (updatingControls || selectedElement == null) return;
@@ -453,9 +598,9 @@ public class LayoutEditorDialog extends JDialog {
             }
         });
 
-        cbFontSize.addActionListener(e -> {
+        spinFontSize.addChangeListener(e -> {
             if (updatingControls || selectedElement == null) return;
-            selectedElement.setFontSize(getSelectedFontSizeFromCombo());
+            selectedElement.setFontSize((Integer) spinFontSize.getValue());
             canvasPanel.repaint();
         });
 
@@ -478,7 +623,12 @@ public class LayoutEditorDialog extends JDialog {
         updatingControls = true;
         cbElementsSelector.removeAllItems();
         for (ElementoLayout elem : elements) {
-            cbElementsSelector.addItem(elem.getTipo() + ": " + (elem.getConteudo() != null && !elem.getConteudo().isEmpty() ? elem.getConteudo() : "Linha"));
+            String label = switch (elem.getTipo()) {
+                case "LINHA" -> "Linha";
+                case "IMAGEM" -> "Imagem: " + (elem.getConteudo() != null ? new File(elem.getConteudo()).getName() : "Sem arquivo");
+                default -> (elem.getConteudo() != null && !elem.getConteudo().isEmpty() ? elem.getConteudo() : "Texto");
+            };
+            cbElementsSelector.addItem(elem.getTipo() + ": " + label);
         }
         updatingControls = false;
     }
@@ -531,22 +681,26 @@ public class LayoutEditorDialog extends JDialog {
         if ("LINHA".equals(selectedElement.getTipo())) {
             textPropertiesPanel.setVisible(false);
             linePropertiesPanel.setVisible(true);
+            imagePropertiesPanel.setVisible(false);
 
             spinX2.setValue(selectedElement.getX2());
             spinThickness.setValue(selectedElement.getThickness());
+        } else if ("IMAGEM".equals(selectedElement.getTipo())) {
+            textPropertiesPanel.setVisible(false);
+            linePropertiesPanel.setVisible(false);
+            imagePropertiesPanel.setVisible(true);
+
+            spinImgWidth.setValue(selectedElement.getX2());
+            spinImgHeight.setValue(selectedElement.getThickness());
         } else {
             textPropertiesPanel.setVisible(true);
             linePropertiesPanel.setVisible(false);
+            imagePropertiesPanel.setVisible(false);
 
             tfTextContent.setText(selectedElement.getConteudo());
             tfTextContent.setEnabled("TEXTO".equals(selectedElement.getTipo())); // Bloqueia conteúdo das tags no TF
             
-            int size = selectedElement.getFontSize();
-            if (size <= 12) cbFontSize.setSelectedIndex(0);
-            else if (size <= 16) cbFontSize.setSelectedIndex(1);
-            else if (size <= 20) cbFontSize.setSelectedIndex(2);
-            else cbFontSize.setSelectedIndex(3);
-
+            spinFontSize.setValue(selectedElement.getFontSize());
             chkBold.setSelected(selectedElement.isBold());
         }
 
@@ -555,18 +709,11 @@ public class LayoutEditorDialog extends JDialog {
         // Revalida os painéis para atualizar a disposição na tela
         textPropertiesPanel.revalidate();
         linePropertiesPanel.revalidate();
+        imagePropertiesPanel.revalidate();
         getContentPane().repaint();
     }
 
-    private int getSelectedFontSizeFromCombo() {
-        int index = cbFontSize.getSelectedIndex();
-        return switch (index) {
-            case 0 -> 12;
-            case 1 -> 16;
-            case 2 -> 20;
-            default -> 26;
-        };
-    }
+
 
     private void salvarConfig() {
         String printerName = (String) cbPrinters.getSelectedItem();
@@ -624,6 +771,21 @@ public class LayoutEditorDialog extends JDialog {
                                 repaint();
                                 break;
                             }
+                        } else if ("IMAGEM".equals(elem.getTipo())) {
+                            // Detecção de clique na caixa da imagem
+                            int w = elem.getX2() > 0 ? elem.getX2() : 50;
+                            int h = elem.getThickness() > 0 ? elem.getThickness() : 50;
+                            Rectangle bounds = new Rectangle(elem.getX(), elem.getY(), w, h);
+                            if (bounds.contains(clickPt)) {
+                                dragElement = elem;
+                                selectedElement = elem;
+                                offsetX = clickPt.x - elem.getX();
+                                offsetY = clickPt.y - elem.getY();
+
+                                updateControlsFromSelected();
+                                repaint();
+                                break;
+                            }
                         } else {
                             // Detecção de clique no texto aproximando sua caixa delimitadora
                             int approxWidth = (elem.getConteudo() != null ? elem.getConteudo().length() : 5) * (elem.getFontSize() / 2);
@@ -651,8 +813,6 @@ public class LayoutEditorDialog extends JDialog {
                 public void mouseDragged(MouseEvent e) {
                     if (dragElement != null) {
                         Point pt = e.getPoint();
-                        int deltaX = pt.x - (dragElement.getX() + offsetX);
-                        int deltaY = pt.y - (dragElement.getY() + offsetY);
 
                         if ("LINHA".equals(dragElement.getTipo())) {
                             int length = dragElement.getX2() - dragElement.getX();
@@ -666,6 +826,14 @@ public class LayoutEditorDialog extends JDialog {
                             dragElement.setY(newY);
                             dragElement.setX(newX);
                             dragElement.setX2(newX + length);
+                        } else if ("IMAGEM".equals(dragElement.getTipo())) {
+                            int w = dragElement.getX2() > 0 ? dragElement.getX2() : 50;
+                            int h = dragElement.getThickness() > 0 ? dragElement.getThickness() : 50;
+                            int newX = Math.max(0, Math.min(pt.x - offsetX, 480 - w));
+                            int newY = Math.max(0, Math.min(pt.y - offsetY, 320 - h));
+
+                            dragElement.setX(newX);
+                            dragElement.setY(newY);
                         } else {
                             int newX = pt.x - offsetX;
                             int newY = pt.y - offsetY;
@@ -684,6 +852,9 @@ public class LayoutEditorDialog extends JDialog {
                         spinY.setValue(dragElement.getY());
                         if ("LINHA".equals(dragElement.getTipo())) {
                             spinX2.setValue(dragElement.getX2());
+                        } else if ("IMAGEM".equals(dragElement.getTipo())) {
+                            spinImgWidth.setValue(dragElement.getX2());
+                            spinImgHeight.setValue(dragElement.getThickness());
                         }
                         updatingControls = false;
 
@@ -711,10 +882,7 @@ public class LayoutEditorDialog extends JDialog {
             g2.setRenderingHint(RenderingHints.KEY_FRACTIONALMETRICS, RenderingHints.VALUE_FRACTIONALMETRICS_ON);
             g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 
-            // Margem de segurança externa (Retângulo preto padrão)
-            g2.setColor(Color.BLACK);
-            g2.setStroke(new BasicStroke(3));
-            g2.drawRect(15, 15, 450, 290);
+
 
             // Renderiza cada elemento livre no Canvas
             for (ElementoLayout elem : elements) {
@@ -732,6 +900,49 @@ public class LayoutEditorDialog extends JDialog {
                     
                     g2.setColor(elem == selectedElement ? Color.BLUE : Color.BLACK);
                     g2.drawLine(elem.getX(), elem.getY(), elem.getX2(), elem.getY());
+                } else if ("IMAGEM".equals(elem.getTipo())) {
+                    // Renderiza imagem
+                    String path = elem.getConteudo();
+                    BufferedImage img = null;
+                    if (path != null && !path.isEmpty()) {
+                        img = imageCache.get(path);
+                        if (img == null) {
+                            try {
+                                File imgFile = new File(path);
+                                if (imgFile.exists()) {
+                                    img = ImageIO.read(imgFile);
+                                    if (img != null) {
+                                        imageCache.put(path, img);
+                                    }
+                                }
+                            } catch (Exception ex) {
+                                System.err.println("Erro ao carregar imagem no canvas: " + ex.getMessage());
+                            }
+                        }
+                    }
+
+                    int w = elem.getX2() > 0 ? elem.getX2() : 80;
+                    int h = elem.getThickness() > 0 ? elem.getThickness() : 80;
+
+                    if (img != null) {
+                        g2.drawImage(img, elem.getX(), elem.getY(), w, h, null);
+                    } else {
+                        // Desenha quadro indicador se a imagem não puder ser lida
+                        g2.setColor(new Color(240, 240, 240));
+                        g2.fillRect(elem.getX(), elem.getY(), w, h);
+                        g2.setColor(Color.GRAY);
+                        g2.drawRect(elem.getX(), elem.getY(), w, h);
+                        g2.setFont(new Font("SansSerif", Font.PLAIN, 10));
+                        g2.drawString("[Imagem]", elem.getX() + 4, elem.getY() + (h / 2));
+                    }
+
+                    // Marcação azul ao redor se selecionada
+                    if (elem == selectedElement) {
+                        g2.setColor(new Color(33, 150, 243, 60));
+                        g2.fillRect(elem.getX() - 3, elem.getY() - 3, w + 6, h + 6);
+                        g2.setColor(Color.BLUE);
+                        g2.drawRect(elem.getX() - 3, elem.getY() - 3, w + 6, h + 6);
+                    }
                 } else {
                     // Renderiza texto ou tag
                     int fontStyle = elem.isBold() ? Font.BOLD : Font.PLAIN;

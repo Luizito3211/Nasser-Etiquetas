@@ -3,8 +3,10 @@ package com.nasser.etiqueta.service;
 import com.nasser.etiqueta.model.EtiquetaData;
 import com.nasser.etiqueta.model.ElementoLayout;
 import javax.print.*;
+import javax.imageio.ImageIO;
 import java.awt.*;
 import java.awt.image.BufferedImage;
+import java.io.File;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
@@ -74,33 +76,66 @@ public class ElginPrinterService {
         g.setRenderingHint(RenderingHints.KEY_FRACTIONALMETRICS, RenderingHints.VALUE_FRACTIONALMETRICS_ON);
         g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 
-        // 3. Moldura Externa de Segurança (Margem 15 pontos)
-        g.setColor(Color.BLACK);
-        g.setStroke(new BasicStroke(3));
-        g.drawRect(15, 15, 450, 290);
-
-        // 4. Desenha os Elementos Livres (Textos, Tags e Linhas)
+        // 3. Desenha os Elementos Livres (Textos, Tags e Linhas)
         for (ElementoLayout elem : elements) {
             if ("LINHA".equals(elem.getTipo())) {
                 // Desenha linha horizontal customizada
                 g.setColor(Color.BLACK);
                 g.setStroke(new BasicStroke(elem.getThickness()));
                 g.drawLine(elem.getX(), elem.getY(), elem.getX2(), elem.getY());
+            } else if ("IMAGEM".equals(elem.getTipo())) {
+                // Desenha imagem inserida na etiqueta
+                if (elem.getConteudo() != null && !elem.getConteudo().isEmpty()) {
+                    try {
+                        File imgFile = new File(elem.getConteudo());
+                        if (imgFile.exists()) {
+                            BufferedImage img = ImageIO.read(imgFile);
+                            if (img != null) {
+                                int w = elem.getX2() > 0 ? elem.getX2() : img.getWidth();
+                                int h = elem.getThickness() > 0 ? elem.getThickness() : img.getHeight();
+                                g.drawImage(img, elem.getX(), elem.getY(), w, h, null);
+                            }
+                        }
+                    } catch (Exception ex) {
+                        System.err.println("Erro ao desenhar imagem na impressão: " + ex.getMessage());
+                    }
+                }
             } else {
                 // Desenha textos fixos ou tags dinâmicas
                 String val = elem.getConteudo();
                 
                 if (data != null && val != null) {
-                    String tagUpper = val.trim().toUpperCase();
-                    val = switch (tagUpper) {
-                        case "{PRODUTO}" -> data.nomeProduto();
-                        case "{SIF}" -> data.sif();
-                        case "{ARMAZENAMENTO}" -> data.armazenamento();
-                        case "{FABRICACAO}" -> data.getDataFabricacaoFormatada();
-                        case "{VALIDADE}" -> data.getDataValidadeFormatada();
-                        case "{RESPONSAVEL}" -> data.responsavel();
-                        default -> val; // Se não for tag, mantém texto fixo
-                    };
+                    boolean hasSif = data.sif() != null && 
+                                     !data.sif().trim().isEmpty() && 
+                                     !data.sif().trim().equalsIgnoreCase("N/A");
+                    String sifStr = hasSif ? data.sif().trim() : "";
+
+                    // Verifica se o texto é um rótulo standalone de SIF (ex: "S.I.F.:", "SIF:")
+                    String normVal = val.trim().replaceAll("[.:]", "").trim();
+                    if (!hasSif && normVal.equalsIgnoreCase("SIF")) {
+                        val = "";
+                    } else {
+                        val = val.replace("{PRODUTO}", data.nomeProduto() != null ? data.nomeProduto() : "")
+                                 .replace("{Produto}", data.nomeProduto() != null ? data.nomeProduto() : "")
+                                 .replace("{SIF}", sifStr)
+                                 .replace("{Sif}", sifStr)
+                                 .replace("{ARMAZENAMENTO}", data.armazenamento() != null ? data.armazenamento() : "")
+                                 .replace("{Armazenamento}", data.armazenamento() != null ? data.armazenamento() : "")
+                                 .replace("{FABRICACAO}", data.getDataFabricacaoFormatada() != null ? data.getDataFabricacaoFormatada() : "")
+                                 .replace("{Fabricacao}", data.getDataFabricacaoFormatada() != null ? data.getDataFabricacaoFormatada() : "")
+                                 .replace("{VALIDADE}", data.getDataValidadeFormatada() != null ? data.getDataValidadeFormatada() : "")
+                                 .replace("{Validade}", data.getDataValidadeFormatada() != null ? data.getDataValidadeFormatada() : "")
+                                 .replace("{RESPONSAVEL}", data.responsavel() != null ? data.responsavel() : "")
+                                 .replace("{Responsavel}", data.responsavel() != null ? data.responsavel() : "");
+
+                        // Se não tem SIF e sobrou apenas o prefixo "S.I.F.: " ou "SIF: ", limpa o texto
+                        if (!hasSif) {
+                            String trimmed = val.trim().replaceAll("[.:]", "").trim();
+                            if (trimmed.equalsIgnoreCase("SIF")) {
+                                val = "";
+                            }
+                        }
+                    }
                 }
 
                 if (val == null) {
