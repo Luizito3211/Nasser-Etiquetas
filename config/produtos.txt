@@ -1,33 +1,34 @@
-Mussarela;171;Refrigerado (até 4°C);3
-Carne;;Refrigerado (até 4°C);3
-Frango;;Refrigerado (até 4°C);3
-Calabresa;1466;Refrigerado (até 4°C);3
-Pepperoni;;Refrigerado (até 4°C);3
-4 Queijos;;Refrigerado (até 4°C);3
-Atum;2087;Refrigerado (até 4°C);3
-Escarola;;Refrigerado (até 4°C);3
-Bacon;5420;Refrigerado (até 4°C);3
-Filé frango;;Refrigerado (até 4°C);3
-Lagarto;;Refrigerado (até 4°C);3
-Lombo;772;Refrigerado (até 4°C);3
-Filé mignon;;Refrigerado (até 4°C);3
-Ricota;1837;Refrigerado (até 4°C);3
-Brócolis;;Refrigerado (até 4°C);3
-Provolone;816;Refrigerado (até 4°C);3
-Kibe;;Refrigerado (até 4°C);3
-Coxinha;;Refrigerado (até 4°C);3
-Peito Peru;237;Refrigerado (até 4°C);3
-Palmito;;Refrigerado (até 4°C);3
-Bauru;;Refrigerado (até 4°C);3
-Portuguesa;;Refrigerado (até 4°C);3
-Presunto;60;Refrigerado (até 4°C);3
-Rosbife;;Refrigerado (até 4°C);3
-Salame;772;Refrigerado (até 4°C);3
-Carne Seca;;Refrigerado (até 4°C);3
-Goiabada;;Refrigerado (até 4°C);14
-Azeitona;;Refrigerado (até 4°C);9
-Leite Condensado;3810;Refrigerado (até 4°C);9
-Doce Leite;1093;Refrigerado (até 4°C);29
-Tomate Seco;;Refrigerado (até 4°C);29
-Leite;;Refrigerado (até 4°C);1
-Rucula;;Refrigerado (até 4°C);2
+[CATEGORIA:Nasser Esfihas]
+Mussarela;171;Refrigerado (até 4°C);3;e12a6c5e-ab3b-455d-978f-7b46210aa9e8
+Carne;;Refrigerado (até 4°C);3;98a5208b-3426-44df-830b-e3f224c7d5d0
+Frango;;Refrigerado (até 4°C);3;c4b52edc-520c-4000-95b6-5f4f9c4c77f4
+Calabresa;1466;Refrigerado (até 4°C);3;10f5c65b-c6cb-406c-aaf1-653a6cae27d2
+Pepperoni;;Refrigerado (até 4°C);3;087212c7-6a48-4c62-b640-0068438f91b5
+4 Queijos;;Refrigerado (até 4°C);3;ebfc3da1-8e75-4505-97f6-ff2b2ff77f16
+Atum;2087;Refrigerado (até 4°C);3;d9126ae2-d3de-44a9-873c-1dd588ddcda7
+Escarola;;Refrigerado (até 4°C);3;36da0402-e8ff-4047-a136-267c825b0f92
+Bacon;5420;Refrigerado (até 4°C);3;c1f52837-a241-4c81-b2c3-c67f302ab1b0
+Filé frango;;Refrigerado (até 4°C);3;7645bbf9-45a9-4fe4-bbc6-6fbeed92f83a
+Lagarto;;Refrigerado (até 4°C);3;aaac8e79-7647-48b5-b190-a26fa843bf07
+Lombo;772;Refrigerado (até 4°C);3;0fef0014-407b-4ffa-a16b-19d579f72927
+Filé mignon;;Refrigerado (até 4°C);3;5d01ce4a-4cd5-4a24-b2a4-30b611ad0496
+Ricota;1837;Refrigerado (até 4°C);3;08ecebe7-d55b-49ea-a841-1d6780384a9b
+Brócolis;;Refrigerado (até 4°C);3;6f8e185c-871d-40af-8770-5c55dd3559fe
+Provolone;816;Refrigerado (até 4°C);3;4a5126df-ba55-4165-b772-90c77f67243c
+Kibe;;Refrigerado (até 4°C);3;21f5f9ee-60dc-437e-9084-2d0deb50fb3c
+Coxinha;;Refrigerado (até 4°C);3;163ad269-68d2-4388-ba86-3190623b3aab
+Peito Peru;237;Refrigerado (até 4°C);3;838561e3-370c-4385-b48c-6087ce558f9b
+Palmito;;Refrigerado (até 4°C);3;8f72fe8f-0e7c-4f49-a315-812c92406198
+Bauru;;Refrigerado (até 4°C);3;c2dd791c-3570-42e9-af59-1afcf1820141
+Portuguesa;;Refrigerado (até 4°C);3;2ba40e0e-9157-4646-abf7-e7927739eb68
+Presunto;60;Refrigerado (até 4°C);3;a323353e-cb08-4caf-bd50-3e0a411e2a95
+Rosbife;;Refrigerado (até 4°C);3;8d54068e-3cfd-4f89-ad6a-4d707a9c625a
+Salame;772;Refrigerado (até 4°C);3;bfc5b7ae-6493-4700-86c4-11d51d437126
+Carne Seca;;Refrigerado (até 4°C);3;1d17af44-e4fa-45e5-8e84-645c35bbbb2a
+Goiabada;;Refrigerado (até 4°C);14;d98c675d-84c1-4ddd-b2aa-b93f01c35e56
+Azeitona;;Refrigerado (até 4°C);9;9a814a00-ac12-4638-ae10-a85efa16354e
+Leite Condensado;3810;Refrigerado (até 4°C);9;14b8eb6c-3294-47eb-859b-9aa744ad02b6
+Doce Leite;1093;Refrigerado (até 4°C);29;54bdab99-76ea-4981-911f-708cf6c5df24
+Tomate Seco;;Refrigerado (até 4°C);29;66ece5f0-5596-4b23-8bdf-c762d7edbd10
+Leite;;Refrigerado (até 4°C);1;fbb29683-2922-468f-94c0-0ca90fcc2ad5
+Rucula;;Refrigerado (até 4°C);2;484a1d34-5df4-4ab7-91fc-0db1c93061e3

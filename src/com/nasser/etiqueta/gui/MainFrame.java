@@ -4,6 +4,7 @@ import com.nasser.etiqueta.model.CategoriaProduto;
 import com.nasser.etiqueta.model.EtiquetaData;
 import com.nasser.etiqueta.model.Produto;
 import com.nasser.etiqueta.model.ElementoLayout;
+import com.nasser.etiqueta.model.Preset;
 import com.nasser.etiqueta.service.ElginPrinterService;
 import com.nasser.etiqueta.service.PersistenceService;
 
@@ -17,6 +18,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.LinkedHashMap;
 
 /**
  * Tela principal do sistema em Tema Dark com Suporte a Pastas/Categorias,
@@ -31,6 +33,8 @@ public class MainFrame extends JFrame {
     private String responsavelAtual;
     private List<CategoriaProduto> categorias;
     private final Map<Produto, JTextField> quantityFields = new HashMap<>();
+    private final Map<String, Integer> quantitiesByProductId = new HashMap<>();
+    private List<Preset> presets;
 
     // Estado de Drag and Drop
     private int dragCatIdx = -1;
@@ -44,6 +48,10 @@ public class MainFrame extends JFrame {
     private JButton btnAddCategory;
     private JButton btnAddProduct;
     private JButton btnConfigLayout;
+    private JComboBox<Preset> cbPresets;
+    private JButton btnSavePreset;
+    private JButton btnApplyPreset;
+    private JButton btnDeletePreset;
 
     private JPanel productsContainer;
     private JScrollPane scrollPane;
@@ -66,6 +74,7 @@ public class MainFrame extends JFrame {
         DarkThemeHelper.styleFrame(this);
 
         this.categorias = persistenceService.loadCategorias();
+        this.presets = persistenceService.loadPresets();
 
         initComponents();
         setupLayout();
@@ -91,6 +100,23 @@ public class MainFrame extends JFrame {
         btnConfigLayout.setFont(new Font("SansSerif", Font.BOLD, 12));
         DarkThemeHelper.styleButton(btnConfigLayout, DarkThemeHelper.COMPONENT_BG, DarkThemeHelper.TEXT_PRIMARY);
         btnConfigLayout.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+
+        cbPresets = new JComboBox<>();
+        cbPresets.setFont(new Font("SansSerif", Font.PLAIN, 12));
+        DarkThemeHelper.styleComboBox(cbPresets);
+        refreshPresetSelector();
+
+        btnSavePreset = new JButton("Salvar como Preset");
+        btnSavePreset.setFont(new Font("SansSerif", Font.PLAIN, 12));
+        DarkThemeHelper.styleButton(btnSavePreset, DarkThemeHelper.ACCENT_BLUE, Color.WHITE);
+
+        btnApplyPreset = new JButton("Aplicar Preset");
+        btnApplyPreset.setFont(new Font("SansSerif", Font.PLAIN, 12));
+        DarkThemeHelper.styleButton(btnApplyPreset, DarkThemeHelper.COMPONENT_BG, DarkThemeHelper.TEXT_PRIMARY);
+
+        btnDeletePreset = new JButton("Excluir Preset");
+        btnDeletePreset.setFont(new Font("SansSerif", Font.PLAIN, 12));
+        DarkThemeHelper.styleButton(btnDeletePreset, DarkThemeHelper.COMPONENT_BG, DarkThemeHelper.RED_ACCENT);
 
         lblUser = new JLabel("Responsável: " + responsavelAtual);
         DarkThemeHelper.styleLabel(lblUser, DarkThemeHelper.TEXT_PRIMARY, Font.BOLD, 13);
@@ -151,7 +177,22 @@ public class MainFrame extends JFrame {
         headerPanel.add(userPanel, BorderLayout.CENTER);
 
         headerPanel.add(btnConfigLayout, BorderLayout.EAST);
-        mainPanel.add(headerPanel, BorderLayout.NORTH);
+        JPanel presetsPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 8, 6));
+        presetsPanel.setBorder(BorderFactory.createEmptyBorder(0, 15, 0, 15));
+        DarkThemeHelper.stylePanel(presetsPanel, DarkThemeHelper.PANEL_BG);
+        JLabel lblPresets = new JLabel("Presets de Impressão:");
+        DarkThemeHelper.styleLabel(lblPresets, DarkThemeHelper.TEXT_PRIMARY, Font.BOLD, 12);
+        presetsPanel.add(lblPresets);
+        cbPresets.setPreferredSize(new Dimension(200, 30));
+        presetsPanel.add(cbPresets);
+        presetsPanel.add(btnSavePreset);
+        presetsPanel.add(btnApplyPreset);
+        presetsPanel.add(btnDeletePreset);
+        JPanel topPanel = new JPanel(new BorderLayout(0, 6));
+        topPanel.setOpaque(false);
+        topPanel.add(headerPanel, BorderLayout.NORTH);
+        topPanel.add(presetsPanel, BorderLayout.SOUTH);
+        mainPanel.add(topPanel, BorderLayout.NORTH);
 
         // 2. Center Panel
         mainPanel.add(scrollPane, BorderLayout.CENTER);
@@ -247,6 +288,9 @@ public class MainFrame extends JFrame {
 
         // Botão Imprimir Lote
         btnImprimirSelecionados.addActionListener(e -> dispararImpressaoLote());
+        btnSavePreset.addActionListener(e -> salvarPresetAtual());
+        btnApplyPreset.addActionListener(e -> aplicarPresetSelecionado());
+        btnDeletePreset.addActionListener(e -> excluirPresetSelecionado());
     }
 
     private void updatePrinterStatus() {
@@ -261,6 +305,7 @@ public class MainFrame extends JFrame {
     }
 
     private void rebuildProductList() {
+        captureVisibleQuantities();
         productsContainer.removeAll();
         quantityFields.clear();
         categoryHeaderPanels.clear();
@@ -494,7 +539,7 @@ public class MainFrame extends JFrame {
         btnMinus.setPreferredSize(new Dimension(42, 36));
         DarkThemeHelper.styleButton(btnMinus, DarkThemeHelper.COMPONENT_BG, DarkThemeHelper.TEXT_PRIMARY);
 
-        JTextField tfQty = new JTextField("0", 3);
+        JTextField tfQty = new JTextField(String.valueOf(quantitiesByProductId.getOrDefault(p.getId(), 0)), 3);
         tfQty.setHorizontalAlignment(JTextField.CENTER);
         tfQty.setFont(new Font("SansSerif", Font.BOLD, 16));
         tfQty.setPreferredSize(new Dimension(42, 36));
@@ -519,8 +564,10 @@ public class MainFrame extends JFrame {
         btnMinus.addActionListener(e -> {
             try {
                 int val = Integer.parseInt(tfQty.getText().trim());
-                if (val > 0)
+                if (val > 0) {
                     tfQty.setText(String.valueOf(val - 1));
+                    quantitiesByProductId.put(p.getId(), val - 1);
+                }
             } catch (NumberFormatException ignored) {
             }
         });
@@ -529,6 +576,7 @@ public class MainFrame extends JFrame {
             try {
                 int val = Integer.parseInt(tfQty.getText().trim());
                 tfQty.setText(String.valueOf(val + 1));
+                quantitiesByProductId.put(p.getId(), val + 1);
             } catch (NumberFormatException ignored) {
             }
         });
@@ -646,6 +694,7 @@ public class MainFrame extends JFrame {
      * lote.
      */
     private void dispararImpressaoLote() {
+        captureVisibleQuantities();
         String printerName = persistenceService.getSelectedPrinter();
         if (printerName == null || printerName.isBlank()) {
             JOptionPane.showMessageDialog(this,
@@ -674,10 +723,13 @@ public class MainFrame extends JFrame {
         // Varre todas as pastas (expandidas ou recolhidas)
         for (CategoriaProduto cat : categorias) {
             for (Produto p : cat.getProdutos()) {
-                JTextField tfQty = quantityFields.get(p);
-                if (tfQty != null) {
+                Integer quantity = quantitiesByProductId.get(p.getId());
+                JTextField visibleField = quantityFields.get(p);
+                if (quantity != null || visibleField != null) {
                     try {
-                        int qty = Integer.parseInt(tfQty.getText().trim());
+                        int qty = visibleField != null
+                                ? Integer.parseInt(visibleField.getText().trim())
+                                : quantity;
                         if (qty > 0) {
                             LocalDateTime validade = fabricacao.plusDays(p.getDiasValidade());
 
@@ -709,9 +761,8 @@ public class MainFrame extends JFrame {
 
         if (imprimiuAlgum) {
             // Zera contadores de todas as caixas
-            for (JTextField tf : quantityFields.values()) {
-                tf.setText("0");
-            }
+            quantitiesByProductId.clear();
+            for (JTextField tf : quantityFields.values()) tf.setText("0");
 
             if (erros.length() > 0) {
                 setStatus("Impressão concluída com alguns avisos.", true);
@@ -748,5 +799,78 @@ public class MainFrame extends JFrame {
         } else {
             lblStatus.setForeground(DarkThemeHelper.GREEN_ACCENT);
         }
+    }
+
+    private void captureVisibleQuantities() {
+        for (Map.Entry<Produto, JTextField> entry : quantityFields.entrySet()) {
+            try {
+                int quantity = Integer.parseInt(entry.getValue().getText().trim());
+                quantitiesByProductId.put(entry.getKey().getId(), Math.max(0, quantity));
+            } catch (NumberFormatException ignored) {
+                // Keep the last valid value; printing will continue to show the existing validation behavior.
+            }
+        }
+    }
+
+    private void refreshPresetSelector() {
+        if (cbPresets == null) return;
+        Preset selected = (Preset) cbPresets.getSelectedItem();
+        cbPresets.removeAllItems();
+        for (Preset preset : presets) cbPresets.addItem(preset);
+        if (selected != null) cbPresets.setSelectedItem(selected);
+    }
+
+    private void salvarPresetAtual() {
+        captureVisibleQuantities();
+        Map<String, Integer> quantities = new LinkedHashMap<>();
+        for (CategoriaProduto category : categorias) {
+            for (Produto product : category.getProdutos()) {
+                int quantity = quantitiesByProductId.getOrDefault(product.getId(), 0);
+                if (quantity > 0) quantities.put(product.getId(), quantity);
+            }
+        }
+        if (quantities.isEmpty()) {
+            JOptionPane.showMessageDialog(this, "Informe ao menos uma quantidade maior que zero antes de salvar.", "Preset vazio", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+        String name = JOptionPane.showInputDialog(this, "Nome do preset:", "Salvar Preset", JOptionPane.PLAIN_MESSAGE);
+        if (name == null || name.trim().isEmpty()) return;
+        String normalizedName = name.trim();
+        presets.removeIf(preset -> preset.getNome().equalsIgnoreCase(normalizedName));
+        presets.add(new Preset(normalizedName, quantities));
+        persistenceService.savePresets(presets);
+        refreshPresetSelector();
+        cbPresets.setSelectedItem(presets.get(presets.size() - 1));
+        setStatus("Preset '" + normalizedName + "' salvo.", false);
+    }
+
+    private void aplicarPresetSelecionado() {
+        Preset preset = (Preset) cbPresets.getSelectedItem();
+        if (preset == null) {
+            JOptionPane.showMessageDialog(this, "Selecione um preset para aplicar.", "Nenhum preset selecionado", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+        captureVisibleQuantities();
+        quantitiesByProductId.clear();
+        quantitiesByProductId.putAll(preset.getQuantidadesPorProduto());
+        for (Map.Entry<Produto, JTextField> entry : quantityFields.entrySet()) {
+            entry.getValue().setText(String.valueOf(quantitiesByProductId.getOrDefault(entry.getKey().getId(), 0)));
+        }
+        rebuildProductList();
+        setStatus("Preset '" + preset.getNome() + "' aplicado. Ajuste as quantidades antes de imprimir.", false);
+    }
+
+    private void excluirPresetSelecionado() {
+        Preset preset = (Preset) cbPresets.getSelectedItem();
+        if (preset == null) {
+            JOptionPane.showMessageDialog(this, "Selecione um preset para excluir.", "Nenhum preset selecionado", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+        int option = JOptionPane.showConfirmDialog(this, "Excluir o preset '" + preset.getNome() + "'?", "Confirmar exclusão", JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE);
+        if (option != JOptionPane.YES_OPTION) return;
+        presets.remove(preset);
+        persistenceService.savePresets(presets);
+        refreshPresetSelector();
+        setStatus("Preset '" + preset.getNome() + "' excluído.", false);
     }
 }

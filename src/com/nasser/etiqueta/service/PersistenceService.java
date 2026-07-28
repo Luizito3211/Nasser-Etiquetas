@@ -3,6 +3,7 @@ package com.nasser.etiqueta.service;
 import com.nasser.etiqueta.model.CategoriaProduto;
 import com.nasser.etiqueta.model.ElementoLayout;
 import com.nasser.etiqueta.model.Produto;
+import com.nasser.etiqueta.model.Preset;
 import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.*;
@@ -21,6 +22,7 @@ public class PersistenceService {
     private static final String LAYOUT_FILE = CONFIG_DIR + "/layout.zpl";
     private static final String APP_PROPERTIES_FILE = CONFIG_DIR + "/app.properties";
     private static final String LAYOUT_ELEMENTS_FILE = CONFIG_DIR + "/layout_elements.txt";
+    private static final String PRESETS_FILE = CONFIG_DIR + "/presets.txt";
 
     public PersistenceService() {
         init();
@@ -137,6 +139,7 @@ public class PersistenceService {
     public List<CategoriaProduto> loadCategorias() {
         List<CategoriaProduto> categorias = new ArrayList<>();
         CategoriaProduto currentCategory = null;
+        boolean productIdsMigrated = false;
 
         try {
             if (Files.exists(Paths.get(PRODUCTS_FILE))) {
@@ -161,7 +164,11 @@ public class PersistenceService {
                             String sif = parts[1];
                             String armazenamento = parts[2];
                             int dias = Integer.parseInt(parts[3]);
-                            Produto p = new Produto(nome, sif, armazenamento, dias);
+                            String id = parts.length >= 5 ? parts[4] : null;
+                            if (id == null || id.isBlank()) {
+                                productIdsMigrated = true;
+                            }
+                            Produto p = new Produto(id, nome, sif, armazenamento, dias);
 
                             if (currentCategory == null) {
                                 currentCategory = new CategoriaProduto("Nasser Esfihas");
@@ -185,6 +192,9 @@ public class PersistenceService {
             defaultCat.getProdutos().add(new Produto("Massa", "", "Congelado (abaixo de -12°C)", 5));
             categorias.add(defaultCat);
             saveCategorias(categorias);
+        } else if (productIdsMigrated) {
+            // Upgrade legacy four-field records once so preset product IDs survive restarts.
+            saveCategorias(categorias);
         }
 
         return categorias;
@@ -199,11 +209,12 @@ public class PersistenceService {
             for (CategoriaProduto cat : categorias) {
                 lines.add("[CATEGORIA:" + cat.getNome() + "]");
                 for (Produto p : cat.getProdutos()) {
-                    lines.add(String.format("%s;%s;%s;%d",
+                    lines.add(String.format("%s;%s;%s;%d;%s",
                             p.getNome(),
                             p.getSif() != null ? p.getSif() : "",
                             p.getArmazenamento() != null ? p.getArmazenamento() : "",
-                            p.getDiasValidade()));
+                            p.getDiasValidade(),
+                            p.getId()));
                 }
             }
             Files.write(Paths.get(PRODUCTS_FILE), lines, StandardCharsets.UTF_8);
@@ -231,6 +242,60 @@ public class PersistenceService {
             cats.get(0).setProdutos(produtos);
         }
         saveCategorias(cats);
+    }
+
+    /**
+     * Loads presets stored as one UTF-8 line per preset: name<TAB>productId=quantity,...
+     */
+    public List<Preset> loadPresets() {
+        List<Preset> presets = new ArrayList<>();
+        try {
+            Path path = Paths.get(PRESETS_FILE);
+            if (!Files.exists(path)) {
+                return presets;
+            }
+            for (String line : Files.readAllLines(path, StandardCharsets.UTF_8)) {
+                if (line.isBlank()) continue;
+                String[] parts = line.split("\\t", 2);
+                if (parts.length != 2 || parts[0].isBlank()) continue;
+                Map<String, Integer> quantities = new LinkedHashMap<>();
+                for (String entry : parts[1].split(",")) {
+                    String[] quantityParts = entry.split("=", 2);
+                    if (quantityParts.length != 2) continue;
+                    try {
+                        int quantity = Integer.parseInt(quantityParts[1]);
+                        if (quantity > 0 && !quantityParts[0].isBlank()) {
+                            quantities.put(quantityParts[0], quantity);
+                        }
+                    } catch (NumberFormatException ignored) {
+                        // Ignore an invalid entry while preserving valid presets.
+                    }
+                }
+                presets.add(new Preset(parts[0], quantities));
+            }
+        } catch (IOException e) {
+            System.err.println("Erro ao carregar presets: " + e.getMessage());
+        }
+        return presets;
+    }
+
+    public void savePresets(List<Preset> presets) {
+        try {
+            List<String> lines = new ArrayList<>();
+            for (Preset preset : presets) {
+                if (preset.getNome() == null || preset.getNome().isBlank()) continue;
+                List<String> entries = new ArrayList<>();
+                for (Map.Entry<String, Integer> entry : preset.getQuantidadesPorProduto().entrySet()) {
+                    if (entry.getKey() != null && !entry.getKey().isBlank() && entry.getValue() != null && entry.getValue() > 0) {
+                        entries.add(entry.getKey() + "=" + entry.getValue());
+                    }
+                }
+                lines.add(preset.getNome().trim() + "\\t" + String.join(",", entries));
+            }
+            Files.write(Paths.get(PRESETS_FILE), lines, StandardCharsets.UTF_8);
+        } catch (IOException e) {
+            System.err.println("Erro ao salvar presets: " + e.getMessage());
+        }
     }
 
     /**
