@@ -14,7 +14,7 @@ public record EtiquetaData(
         LocalDateTime dataValidade,
         String responsavel
 ) {
-    private static final DateTimeFormatter FORMATTER = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
+    private static final DateTimeFormatter FORMATTER = DateTimeFormatter.ofPattern("dd/MM/yyyy");
 
     public String getDataFabricacaoFormatada() {
         return dataFabricacao != null ? dataFabricacao.format(FORMATTER) : "";
