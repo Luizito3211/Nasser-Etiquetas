@@ -1,6 +1,6 @@
 [CATEGORIA:Nasser Esfihas]
-Mussarela;171;Refrigerado (até 4°C);3;e12a6c5e-ab3b-455d-978f-7b46210aa9e8
 Carne;;Refrigerado (até 4°C);3;98a5208b-3426-44df-830b-e3f224c7d5d0
+Mussarela;171;Refrigerado (até 4°C);3;e12a6c5e-ab3b-455d-978f-7b46210aa9e8
 Frango;;Refrigerado (até 4°C);3;c4b52edc-520c-4000-95b6-5f4f9c4c77f4
 Calabresa;1466;Refrigerado (até 4°C);3;10f5c65b-c6cb-406c-aaf1-653a6cae27d2
 Pepperoni;;Refrigerado (até 4°C);3;087212c7-6a48-4c62-b640-0068438f91b5

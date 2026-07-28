@@ -9,6 +9,7 @@ import com.nasser.etiqueta.service.ElginPrinterService;
 import com.nasser.etiqueta.service.PersistenceService;
 
 import javax.swing.*;
+import javax.swing.border.Border;
 import javax.swing.border.EmptyBorder;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
@@ -41,6 +42,9 @@ public class MainFrame extends JFrame {
     private int dragProdIdx = -1;
     private JPanel currentHoveredCatPanel = null;
     private final List<JPanel> categoryHeaderPanels = new ArrayList<>();
+    private final List<JPanel> productCardPanels = new ArrayList<>();
+    private JComponent currentDropTarget;
+    private Border currentDropTargetBorder;
 
     // Componentes de Interface
     private JLabel lblUser;
@@ -309,6 +313,7 @@ public class MainFrame extends JFrame {
         productsContainer.removeAll();
         quantityFields.clear();
         categoryHeaderPanels.clear();
+        productCardPanels.clear();
 
         GridBagConstraints gbc = new GridBagConstraints();
         gbc.gridx = 0;
@@ -479,6 +484,9 @@ public class MainFrame extends JFrame {
                 BorderFactory.createLineBorder(DarkThemeHelper.BORDER_COLOR, 1, true),
                 BorderFactory.createEmptyBorder(10, 14, 10, 14)));
         DarkThemeHelper.stylePanel(card, DarkThemeHelper.CARD_BG);
+        card.putClientProperty("categoryIndex", catIdx);
+        card.putClientProperty("productIndex", prodIdx);
+        productCardPanels.add(card);
 
         // Arraste: Handle visual de arrastar
         JLabel lblDragHandle = new JLabel(" ⠿ ");
@@ -605,7 +613,7 @@ public class MainFrame extends JFrame {
             }
         });
 
-        // Drag & Drop Handler (Arrastar entre pastas)
+        // Drag & Drop Handler (reordena dentro da pasta ou move para outra pasta)
         MouseAdapter dragAdapter = new MouseAdapter() {
             @Override
             public void mousePressed(MouseEvent e) {
@@ -617,17 +625,8 @@ public class MainFrame extends JFrame {
             public void mouseDragged(MouseEvent e) {
                 if (dragCatIdx != -1) {
                     Point screenPt = e.getLocationOnScreen();
-                    JPanel targetHeader = findCategoryHeaderAt(screenPt);
-                    if (targetHeader != currentHoveredCatPanel) {
-                        if (currentHoveredCatPanel != null) {
-                            currentHoveredCatPanel.setBorder(null);
-                        }
-                        currentHoveredCatPanel = targetHeader;
-                        if (currentHoveredCatPanel != null) {
-                            currentHoveredCatPanel
-                                    .setBorder(BorderFactory.createLineBorder(DarkThemeHelper.ACCENT_BLUE, 2, true));
-                        }
-                    }
+                    JPanel targetCard = findProductCardAt(screenPt);
+                    setDropTargetHighlight(targetCard != null ? targetCard : findCategoryHeaderAt(screenPt));
                 }
             }
 
@@ -635,21 +634,20 @@ public class MainFrame extends JFrame {
             public void mouseReleased(MouseEvent e) {
                 if (dragCatIdx != -1) {
                     Point screenPt = e.getLocationOnScreen();
-                    Integer targetCatIdx = findCategoryIndexAt(screenPt);
-                    if (currentHoveredCatPanel != null) {
-                        currentHoveredCatPanel.setBorder(null);
-                        currentHoveredCatPanel = null;
-                    }
+                    JPanel targetCard = findProductCardAt(screenPt);
+                    Integer targetCatIdx = targetCard != null
+                            ? (Integer) targetCard.getClientProperty("categoryIndex")
+                            : findCategoryIndexAt(screenPt);
+                    Integer targetProdIdx = targetCard != null
+                            ? (Integer) targetCard.getClientProperty("productIndex")
+                            : null;
+                    clearDropTargetHighlight();
 
                     if (targetCatIdx != null && targetCatIdx >= 0 && targetCatIdx < categorias.size()) {
-                        if (targetCatIdx != dragCatIdx) {
-                            Produto moved = categorias.get(dragCatIdx).getProdutos().remove(dragProdIdx);
-                            categorias.get(targetCatIdx).getProdutos().add(moved);
-                            persistenceService.saveCategorias(categorias);
-                            rebuildProductList();
-                            setStatus("Produto '" + moved.getNome() + "' movido para a pasta '"
-                                    + categorias.get(targetCatIdx).getNome() + "'.", false);
-                        }
+                        int insertionIndex = targetProdIdx != null
+                                ? targetProdIdx
+                                : categorias.get(targetCatIdx).getProdutos().size();
+                        moveProduct(dragCatIdx, dragProdIdx, targetCatIdx, insertionIndex);
                     }
                     dragCatIdx = -1;
                     dragProdIdx = -1;
@@ -657,8 +655,7 @@ public class MainFrame extends JFrame {
             }
         };
 
-        lblDragHandle.addMouseListener(dragAdapter);
-        lblDragHandle.addMouseMotionListener(dragAdapter);
+        installProductDragHandler(dragAdapter, card, leftGroup, detailsPanel, lblDragHandle, lblName, lblSub);
 
         return card;
     }
@@ -674,6 +671,62 @@ public class MainFrame extends JFrame {
             }
         }
         return null;
+    }
+
+    private JPanel findProductCardAt(Point screenPt) {
+        for (JPanel card : productCardPanels) {
+            if (card.isShowing()) {
+                Point location = card.getLocationOnScreen();
+                Rectangle bounds = new Rectangle(location.x, location.y, card.getWidth(), card.getHeight());
+                if (bounds.contains(screenPt)) return card;
+            }
+        }
+        return null;
+    }
+
+    private void installProductDragHandler(MouseAdapter adapter, Component... components) {
+        for (Component component : components) {
+            component.addMouseListener(adapter);
+            component.addMouseMotionListener(adapter);
+        }
+    }
+
+    private void setDropTargetHighlight(JComponent target) {
+        if (target == currentDropTarget) return;
+        clearDropTargetHighlight();
+        if (target != null) {
+            currentDropTarget = target;
+            currentDropTargetBorder = target.getBorder();
+            target.setBorder(BorderFactory.createLineBorder(DarkThemeHelper.ACCENT_BLUE, 2, true));
+        }
+    }
+
+    private void clearDropTargetHighlight() {
+        if (currentDropTarget != null) {
+            currentDropTarget.setBorder(currentDropTargetBorder);
+            currentDropTarget = null;
+            currentDropTargetBorder = null;
+        }
+        currentHoveredCatPanel = null;
+    }
+
+    private void moveProduct(int sourceCatIdx, int sourceProdIdx, int targetCatIdx, int targetProdIdx) {
+        if (sourceCatIdx < 0 || sourceCatIdx >= categorias.size()
+                || sourceProdIdx < 0 || sourceProdIdx >= categorias.get(sourceCatIdx).getProdutos().size()) {
+            return;
+        }
+
+        List<Produto> sourceProducts = categorias.get(sourceCatIdx).getProdutos();
+        Produto moved = sourceProducts.remove(sourceProdIdx);
+        List<Produto> targetProducts = categorias.get(targetCatIdx).getProdutos();
+        if (sourceCatIdx == targetCatIdx && sourceProdIdx < targetProdIdx) targetProdIdx--;
+        targetProdIdx = Math.max(0, Math.min(targetProdIdx, targetProducts.size()));
+        targetProducts.add(targetProdIdx, moved);
+
+        persistenceService.saveCategorias(categorias);
+        rebuildProductList();
+        String action = sourceCatIdx == targetCatIdx ? "reordenado" : "movido para a pasta '" + categorias.get(targetCatIdx).getNome() + "'";
+        setStatus("Produto '" + moved.getNome() + "' " + action + ".", false);
     }
 
     private Integer findCategoryIndexAt(Point screenPt) {

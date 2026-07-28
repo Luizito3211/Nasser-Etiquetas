@@ -256,10 +256,18 @@ public class PersistenceService {
             }
             for (String line : Files.readAllLines(path, StandardCharsets.UTF_8)) {
                 if (line.isBlank()) continue;
-                String[] parts = line.split("\\t", 2);
-                if (parts.length != 2 || parts[0].isBlank()) continue;
+                int separatorIndex = line.indexOf('\t');
+                int separatorLength = 1;
+                if (separatorIndex < 0) {
+                    // Accept files written by the previous version, which stored a literal "\\t".
+                    separatorIndex = line.indexOf("\\t");
+                    separatorLength = 2;
+                }
+                if (separatorIndex < 1) continue;
+                String presetName = line.substring(0, separatorIndex);
+                String quantitiesText = line.substring(separatorIndex + separatorLength);
                 Map<String, Integer> quantities = new LinkedHashMap<>();
-                for (String entry : parts[1].split(",")) {
+                for (String entry : quantitiesText.split(",")) {
                     String[] quantityParts = entry.split("=", 2);
                     if (quantityParts.length != 2) continue;
                     try {
@@ -271,7 +279,7 @@ public class PersistenceService {
                         // Ignore an invalid entry while preserving valid presets.
                     }
                 }
-                presets.add(new Preset(parts[0], quantities));
+                presets.add(new Preset(presetName, quantities));
             }
         } catch (IOException e) {
             System.err.println("Erro ao carregar presets: " + e.getMessage());
@@ -290,7 +298,7 @@ public class PersistenceService {
                         entries.add(entry.getKey() + "=" + entry.getValue());
                     }
                 }
-                lines.add(preset.getNome().trim() + "\\t" + String.join(",", entries));
+                lines.add(preset.getNome().trim() + "\t" + String.join(",", entries));
             }
             Files.write(Paths.get(PRESETS_FILE), lines, StandardCharsets.UTF_8);
         } catch (IOException e) {

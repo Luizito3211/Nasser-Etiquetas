@@ -105,37 +105,22 @@ public class ElginPrinterService {
                 String val = elem.getConteudo();
                 
                 if (data != null && val != null) {
-                    boolean hasSif = data.sif() != null && 
-                                     !data.sif().trim().isEmpty() && 
-                                     !data.sif().trim().equalsIgnoreCase("N/A");
-                    String sifStr = hasSif ? data.sif().trim() : "";
-
-                    // Verifica se o texto é um rótulo standalone de SIF (ex: "S.I.F.:", "SIF:")
-                    String normVal = val.trim().replaceAll("[.:]", "").trim();
-                    if (!hasSif && normVal.equalsIgnoreCase("SIF")) {
-                        val = "";
-                    } else {
-                        val = val.replace("{PRODUTO}", data.nomeProduto() != null ? data.nomeProduto() : "")
-                                 .replace("{Produto}", data.nomeProduto() != null ? data.nomeProduto() : "")
-                                 .replace("{SIF}", sifStr)
-                                 .replace("{Sif}", sifStr)
-                                 .replace("{ARMAZENAMENTO}", data.armazenamento() != null ? data.armazenamento() : "")
-                                 .replace("{Armazenamento}", data.armazenamento() != null ? data.armazenamento() : "")
-                                 .replace("{FABRICACAO}", data.getDataFabricacaoFormatada() != null ? data.getDataFabricacaoFormatada() : "")
-                                 .replace("{Fabricacao}", data.getDataFabricacaoFormatada() != null ? data.getDataFabricacaoFormatada() : "")
-                                 .replace("{VALIDADE}", data.getDataValidadeFormatada() != null ? data.getDataValidadeFormatada() : "")
-                                 .replace("{Validade}", data.getDataValidadeFormatada() != null ? data.getDataValidadeFormatada() : "")
-                                 .replace("{RESPONSAVEL}", data.responsavel() != null ? data.responsavel() : "")
-                                 .replace("{Responsavel}", data.responsavel() != null ? data.responsavel() : "");
-
-                        // Se não tem SIF e sobrou apenas o prefixo "S.I.F.: " ou "SIF: ", limpa o texto
-                        if (!hasSif) {
-                            String trimmed = val.trim().replaceAll("[.:]", "").trim();
-                            if (trimmed.equalsIgnoreCase("SIF")) {
-                                val = "";
-                            }
-                        }
-                    }
+                    String sifStr = (data.sif() == null || data.sif().trim().equalsIgnoreCase("N/A"))
+                            ? "" : data.sif().trim();
+                    // Never remove static text: a standalone "S.I.F.:" element remains visible
+                    // and a combined "S.I.F.: {Sif}" element keeps its prefix when SIF is empty.
+                    val = val.replace("{PRODUTO}", data.nomeProduto() != null ? data.nomeProduto() : "")
+                             .replace("{Produto}", data.nomeProduto() != null ? data.nomeProduto() : "")
+                             .replace("{SIF}", sifStr)
+                             .replace("{Sif}", sifStr)
+                             .replace("{ARMAZENAMENTO}", data.armazenamento() != null ? data.armazenamento() : "")
+                             .replace("{Armazenamento}", data.armazenamento() != null ? data.armazenamento() : "")
+                             .replace("{FABRICACAO}", data.getDataFabricacaoFormatada() != null ? data.getDataFabricacaoFormatada() : "")
+                             .replace("{Fabricacao}", data.getDataFabricacaoFormatada() != null ? data.getDataFabricacaoFormatada() : "")
+                             .replace("{VALIDADE}", data.getDataValidadeFormatada() != null ? data.getDataValidadeFormatada() : "")
+                             .replace("{Validade}", data.getDataValidadeFormatada() != null ? data.getDataValidadeFormatada() : "")
+                             .replace("{RESPONSAVEL}", data.responsavel() != null ? data.responsavel() : "")
+                             .replace("{Responsavel}", data.responsavel() != null ? data.responsavel() : "");
                 }
 
                 if (val == null) {
