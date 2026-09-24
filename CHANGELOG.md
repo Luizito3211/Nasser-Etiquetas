@@ -5,7 +5,7 @@ Todas as alterações notáveis neste projeto serão documentadas neste arquivo.
 O formato é baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.0.0/),
 e este projeto adere ao [Versionamento Semântico](https://semver.org/lang/pt-BR/).
 
-## [1.0.0] - 2026-09-24
+## [2.1.0] - 2026-09-24
 
 ### Adicionado
 - Migração completa da interface para JavaFX 21 com AtlantaFX (Cupertino Dark) e identidade visual da marca Nasser Esfihas (vermelho, branco e amarelo).
