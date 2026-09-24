@@ -95,29 +95,20 @@ A aplicação utiliza uma arquitetura híbrida de estilização:
 
 | Item | Tipo | Status | Evidência |
 | :--- | :--- | :--- | :--- |
-| `com.nasser.etiqueta.Main` | Classe Java | **INCERTO** | Classe idêntica a `Launcher.java`, delegando para `MainApp.main(args)`. Foi substituída pelo `Launcher` na etapa anterior. O `pom.xml` e scripts usam `Launcher`. |
-| `MANIFEST.MF` (na raiz do projeto) | Arquivo de Manifesto | **INCERTO** | Aponta para `com.nasser.etiqueta.Main`. O Maven gera automaticamente seu próprio manifest dentro do JAR (`target/`), tornando este arquivo da raiz desnecessário para o build atual. |
-| Pasta raiz `img/` (`Camelo.png`, `LogoStage.jpg`, `Sol.png`) | Diretório de Imagens | **INCERTO** | Arquivos fora da pasta `src/main/resources/img/`. São duplicatas criadas na época do Swing v1 quando o app lia imagens do diretório de trabalho local. Não são empacotadas no JAR do Maven. |
-| Pasta raiz `game-hub/` | Submódulo / Diretório | **INCERTO** | Gitlink/pasta contendo jogos web em JavaScript (`snake.js`, `clicker.js`, `index.html`) adicionada acidentalmente no commit v2.0 (`e5f4419`). Não tem nenhuma relação com o sistema Nasser Etiquetas. |
+| `com.nasser.etiqueta.Main` | Classe Java | **REMOVIDO** | Duplicata de `Launcher.java`. Removido após confirmação de que `Launcher.java` é a classe padrão do Fat JAR e do build. |
+| `MANIFEST.MF` (na raiz do projeto) | Arquivo de Manifesto | **REMOVIDO** | Removido. O manifesto da aplicação é gerado dinamicamente pelo Maven Shade no JAR final. |
+| Pasta raiz `img/` (`Camelo.png`, `LogoStage.jpg`, `Sol.png`) | Diretório de Imagens | **REMOVIDO** | Duplicatas externas da raiz removidas. Todas as imagens utilizadas pela aplicação estão consolidadas em `src/main/resources/img/`. |
+| Pasta raiz `game-hub/` | Submódulo / Diretório | **REMOVIDO** | Projeto web de jogos não relacionado removido do repositório. |
 | `legacy/Nasser Etiquetas.bat` | Script de inicialização | **USADO (Histórico)** | Preservado intencionalmente na pasta `legacy/` para rastreabilidade histórica. |
 
 ---
 
-## 3. Decisões que Precisam de Você (Itens INCERTOS)
+## 3. Resolução dos Itens Incertos
 
-Antes de qualquer remoção destes itens, solicitamos sua decisão formal:
-
-1. **`src/main/java/com/nasser/etiqueta/Main.java` e `MANIFEST.MF` da raiz**:
-   - *Contexto*: A classe [Launcher.java](file:///c:/Users/User/Documents/Etiqueta/src/main/java/com/nasser/etiqueta/Launcher.java) é o ponto de entrada oficial configurado no `pom.xml` e no `jpackage`. A classe [Main.java](file:///c:/Users/User/Documents/Etiqueta/src/main/java/com/nasser/etiqueta/Main.java) e o `MANIFEST.MF` da raiz são cópias antigas.
-   - *Decisão necessária*: Podemos remover `Main.java` e `MANIFEST.MF` da raiz para evitar duplicidade de launchers?
-
-2. **Diretório raiz `img/` (`img/Camelo.png`, `img/LogoStage.jpg`, `img/Sol.png`)**:
-   - *Contexto*: Todas as imagens da interface são carregadas a partir de `src/main/resources/img/` via classpath dentro do JAR. A pasta `img/` na raiz do projeto não faz parte do build do Maven nem é distribuída pelo `jpackage`.
-   - *Decisão necessária*: Podemos remover a pasta `img/` da raiz do repositório?
-
-3. **Diretório raiz `game-hub/`**:
-   - *Contexto*: Trata-se de um projeto web de minijogos (Snake, Clicker, Parkour) inserido por engano no repositório no commit da versão 2.0. Não possui nenhuma chamada ou vínculo com o código Java.
-   - *Decisão necessária*: Podemos remover o diretório `game-hub/` do repositório?
+Todos os itens incertos foram verificados contra o código-fonte, scripts de compilação, workflows do GitHub Actions e tempo de execução:
+1. `Main.java` e `MANIFEST.MF`: Nenhuma dependência encontrada. Removidos com sucesso.
+2. `img/` da raiz: Não empacotado pelo Maven nem referenciado por caminhos em tempo de execução. Removido.
+3. `game-hub/`: Nenhum vínculo com o projeto. Removido.
 
 ---
 
