@@ -8,6 +8,8 @@ import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.*;
 import java.util.*;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  * Serviço responsável pela persistência local das configurações, produtos e
@@ -17,12 +19,14 @@ import java.util.*;
  */
 public class PersistenceService {
 
-    private static final String CONFIG_DIR = "config";
-    private static final String PRODUCTS_FILE = CONFIG_DIR + "/produtos.txt";
-    private static final String LAYOUT_FILE = CONFIG_DIR + "/layout.zpl";
-    private static final String APP_PROPERTIES_FILE = CONFIG_DIR + "/app.properties";
-    private static final String LAYOUT_ELEMENTS_FILE = CONFIG_DIR + "/layout_elements.txt";
-    private static final String PRESETS_FILE = CONFIG_DIR + "/presets.txt";
+    private static final Logger LOGGER = Logger.getLogger(PersistenceService.class.getName());
+
+    private static final Path CONFIG_DIR = AppEnvironment.getConfigDir();
+    private static final Path PRODUCTS_FILE = AppEnvironment.getConfigFile("produtos.txt");
+    private static final Path LAYOUT_FILE = AppEnvironment.getConfigFile("layout.zpl");
+    private static final Path APP_PROPERTIES_FILE = AppEnvironment.getConfigFile("app.properties");
+    private static final Path LAYOUT_ELEMENTS_FILE = AppEnvironment.getConfigFile("layout_elements.txt");
+    private static final Path PRESETS_FILE = AppEnvironment.getConfigFile("presets.txt");
 
     public PersistenceService() {
         init();
@@ -33,38 +37,36 @@ public class PersistenceService {
      * existam.
      */
     private void init() {
+        AppEnvironment.init();
+        migrateLegacyDataIfPresent();
         try {
-            Files.createDirectories(Paths.get(CONFIG_DIR));
+            Files.createDirectories(CONFIG_DIR);
 
             // Cria lista padrão de produtos se o arquivo não existir
-            File prodFile = new File(PRODUCTS_FILE);
-            if (!prodFile.exists()) {
+            if (!Files.exists(PRODUCTS_FILE)) {
                 writeDefaultProducts();
             }
 
             // Cria layout padrão ZPL se o arquivo não existir
-            File layoutFile = new File(LAYOUT_FILE);
-            if (!layoutFile.exists()) {
+            if (!Files.exists(LAYOUT_FILE)) {
                 writeDefaultLayout();
             }
 
             // Cria arquivo de propriedades da aplicação
-            File appFile = new File(APP_PROPERTIES_FILE);
-            if (!appFile.exists()) {
+            if (!Files.exists(APP_PROPERTIES_FILE)) {
                 writeDefaultProperties();
             }
 
             // Cria arquivo de elementos do layout visual
-            File elemFile = new File(LAYOUT_ELEMENTS_FILE);
-            if (!elemFile.exists()) {
+            if (!Files.exists(LAYOUT_ELEMENTS_FILE)) {
                 writeDefaultLayoutElements();
             } else {
                 // Se existe, verifica se é do formato antigo de 5 campos. Se for, força
                 // reescrever.
                 try {
-                    List<String> lines = Files.readAllLines(Paths.get(LAYOUT_ELEMENTS_FILE), StandardCharsets.UTF_8);
+                    List<String> lines = Files.readAllLines(LAYOUT_ELEMENTS_FILE, StandardCharsets.UTF_8);
                     if (!lines.isEmpty() && lines.get(0).split(";").length < 8) {
-                        System.out.println("Formato antigo detectado em layout_elements.txt. Atualizando...");
+                        LOGGER.info("Formato antigo detectado em layout_elements.txt. Atualizando...");
                         writeDefaultLayoutElements();
                     }
                 } catch (Exception ignored) {
@@ -72,7 +74,31 @@ public class PersistenceService {
             }
 
         } catch (IOException e) {
-            System.err.println("Erro ao inicializar o diretório de configurações: " + e.getMessage());
+            LOGGER.log(Level.SEVERE, "Erro ao inicializar o diretório de configurações: " + e.getMessage(), e);
+        }
+    }
+
+    private void migrateLegacyDataIfPresent() {
+        try {
+            Path legacyDir = Paths.get("config");
+            if (Files.exists(legacyDir) && Files.isDirectory(legacyDir)) {
+                if (!legacyDir.toAbsolutePath().normalize().equals(CONFIG_DIR.toAbsolutePath().normalize())) {
+                    try (var stream = Files.list(legacyDir)) {
+                        for (Path legacyFile : (Iterable<Path>) stream::iterator) {
+                            if (Files.isRegularFile(legacyFile)) {
+                                Path destFile = CONFIG_DIR.resolve(legacyFile.getFileName());
+                                if (!Files.exists(destFile)) {
+                                    Files.createDirectories(CONFIG_DIR);
+                                    Files.copy(legacyFile, destFile, StandardCopyOption.COPY_ATTRIBUTES);
+                                    LOGGER.info("Arquivo de configuração migrado do diretório legado: " + legacyFile.getFileName());
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        } catch (Exception e) {
+            LOGGER.log(Level.WARNING, "Erro durante migração de dados legados: " + e.getMessage(), e);
         }
     }
 
@@ -83,7 +109,7 @@ public class PersistenceService {
                 "Frango;;Refrigerado (até 4°C);3",
                 "Maionese;;Refrigerado (até 4°C);1",
                 "Massa;;Congelado (abaixo de -12°C);5");
-        Files.write(Paths.get(PRODUCTS_FILE), defaultProducts, StandardCharsets.UTF_8);
+        Files.write(PRODUCTS_FILE, defaultProducts, StandardCharsets.UTF_8);
     }
 
     private void writeDefaultLayout() throws IOException {
@@ -103,13 +129,13 @@ public class PersistenceService {
                 ^FO30,235^GB420,1,1^FS
                 ^FO30,245^A0N,18,18^FDResp.: {RESPONSAVEL}^FS
                 ^XZ""";
-        Files.writeString(Paths.get(LAYOUT_FILE), defaultZpl, StandardCharsets.UTF_8);
+        Files.writeString(LAYOUT_FILE, defaultZpl, StandardCharsets.UTF_8);
     }
 
     private void writeDefaultProperties() throws IOException {
         Properties props = new Properties();
         props.setProperty("selected.printer", "");
-        try (OutputStream out = new FileOutputStream(APP_PROPERTIES_FILE)) {
+        try (OutputStream out = Files.newOutputStream(APP_PROPERTIES_FILE)) {
             props.store(out, "Configuracoes do Aplicativo");
         }
     }
@@ -130,7 +156,7 @@ public class PersistenceService {
                 "LINHA;;20;235;460;0;false;1",
                 "TEXTO;Responsável:;20;275;0;18;true;1",
                 "TAG;{Responsavel};160;275;0;18;false;1");
-        Files.write(Paths.get(LAYOUT_ELEMENTS_FILE), defaultElements, StandardCharsets.UTF_8);
+        Files.write(LAYOUT_ELEMENTS_FILE, defaultElements, StandardCharsets.UTF_8);
     }
 
     /**
@@ -142,8 +168,8 @@ public class PersistenceService {
         boolean productIdsMigrated = false;
 
         try {
-            if (Files.exists(Paths.get(PRODUCTS_FILE))) {
-                List<String> lines = Files.readAllLines(Paths.get(PRODUCTS_FILE), StandardCharsets.UTF_8);
+            if (Files.exists(PRODUCTS_FILE)) {
+                List<String> lines = Files.readAllLines(PRODUCTS_FILE, StandardCharsets.UTF_8);
                 for (String line : lines) {
                     String trimmed = line.trim();
                     if (trimmed.isEmpty())
@@ -180,7 +206,7 @@ public class PersistenceService {
                 }
             }
         } catch (Exception e) {
-            System.err.println("Erro ao carregar categorias/produtos: " + e.getMessage());
+            LOGGER.log(Level.SEVERE, "Erro ao carregar categorias/produtos: " + e.getMessage(), e);
         }
 
         if (categorias.isEmpty()) {
@@ -217,9 +243,9 @@ public class PersistenceService {
                             p.getId()));
                 }
             }
-            Files.write(Paths.get(PRODUCTS_FILE), lines, StandardCharsets.UTF_8);
+            Files.write(PRODUCTS_FILE, lines, StandardCharsets.UTF_8);
         } catch (IOException e) {
-            System.err.println("Erro ao salvar categorias e produtos: " + e.getMessage());
+            LOGGER.log(Level.SEVERE, "Erro ao salvar categorias e produtos: " + e.getMessage(), e);
         }
     }
 
@@ -250,11 +276,10 @@ public class PersistenceService {
     public List<Preset> loadPresets() {
         List<Preset> presets = new ArrayList<>();
         try {
-            Path path = Paths.get(PRESETS_FILE);
-            if (!Files.exists(path)) {
+            if (!Files.exists(PRESETS_FILE)) {
                 return presets;
             }
-            for (String line : Files.readAllLines(path, StandardCharsets.UTF_8)) {
+            for (String line : Files.readAllLines(PRESETS_FILE, StandardCharsets.UTF_8)) {
                 if (line.isBlank()) continue;
                 int separatorIndex = line.indexOf('\t');
                 int separatorLength = 1;
@@ -282,7 +307,7 @@ public class PersistenceService {
                 presets.add(new Preset(presetName, quantities));
             }
         } catch (IOException e) {
-            System.err.println("Erro ao carregar presets: " + e.getMessage());
+            LOGGER.log(Level.SEVERE, "Erro ao carregar presets: " + e.getMessage(), e);
         }
         return presets;
     }
@@ -300,9 +325,9 @@ public class PersistenceService {
                 }
                 lines.add(preset.getNome().trim() + "\t" + String.join(",", entries));
             }
-            Files.write(Paths.get(PRESETS_FILE), lines, StandardCharsets.UTF_8);
+            Files.write(PRESETS_FILE, lines, StandardCharsets.UTF_8);
         } catch (IOException e) {
-            System.err.println("Erro ao salvar presets: " + e.getMessage());
+            LOGGER.log(Level.SEVERE, "Erro ao salvar presets: " + e.getMessage(), e);
         }
     }
 
@@ -312,8 +337,8 @@ public class PersistenceService {
     public List<ElementoLayout> loadLayoutElements() {
         List<ElementoLayout> list = new ArrayList<>();
         try {
-            if (Files.exists(Paths.get(LAYOUT_ELEMENTS_FILE))) {
-                List<String> lines = Files.readAllLines(Paths.get(LAYOUT_ELEMENTS_FILE), StandardCharsets.UTF_8);
+            if (Files.exists(LAYOUT_ELEMENTS_FILE)) {
+                List<String> lines = Files.readAllLines(LAYOUT_ELEMENTS_FILE, StandardCharsets.UTF_8);
                 for (String line : lines) {
                     if (line.trim().isEmpty())
                         continue;
@@ -332,7 +357,7 @@ public class PersistenceService {
                 }
             }
         } catch (Exception e) {
-            System.err.println("Erro ao carregar elementos do layout: " + e.getMessage());
+            LOGGER.log(Level.SEVERE, "Erro ao carregar elementos do layout: " + e.getMessage(), e);
         }
 
         if (list.isEmpty()) {
@@ -359,9 +384,9 @@ public class PersistenceService {
                         e.isBold(),
                         e.getThickness()));
             }
-            Files.write(Paths.get(LAYOUT_ELEMENTS_FILE), lines, StandardCharsets.UTF_8);
+            Files.write(LAYOUT_ELEMENTS_FILE, lines, StandardCharsets.UTF_8);
         } catch (IOException e) {
-            System.err.println("Erro ao salvar elementos de layout: " + e.getMessage());
+            LOGGER.log(Level.SEVERE, "Erro ao salvar elementos de layout: " + e.getMessage(), e);
         }
     }
 
@@ -389,7 +414,7 @@ public class PersistenceService {
      */
     public String getSelectedPrinter() {
         Properties props = new Properties();
-        try (InputStream in = new FileInputStream(APP_PROPERTIES_FILE)) {
+        try (InputStream in = Files.newInputStream(APP_PROPERTIES_FILE)) {
             props.load(in);
             return props.getProperty("selected.printer", "");
         } catch (IOException e) {
@@ -403,7 +428,7 @@ public class PersistenceService {
     public void saveSelectedPrinter(String printerName) {
         Properties props = new Properties();
         try {
-            try (InputStream in = new FileInputStream(APP_PROPERTIES_FILE)) {
+            try (InputStream in = Files.newInputStream(APP_PROPERTIES_FILE)) {
                 props.load(in);
             }
         } catch (IOException e) {
@@ -412,10 +437,10 @@ public class PersistenceService {
 
         props.setProperty("selected.printer", printerName != null ? printerName : "");
 
-        try (OutputStream out = new FileOutputStream(APP_PROPERTIES_FILE)) {
+        try (OutputStream out = Files.newOutputStream(APP_PROPERTIES_FILE)) {
             props.store(out, "Configuracoes do Aplicativo");
         } catch (IOException e) {
-            System.err.println("Erro ao salvar impressora selecionada: " + e.getMessage());
+            LOGGER.log(Level.SEVERE, "Erro ao salvar impressora selecionada: " + e.getMessage(), e);
         }
     }
 }
