@@ -2,16 +2,17 @@
 .root {
     -fx-font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif;
     -fx-font-size: 13px;
-    -fx-base: #E2DDD6;
-    -fx-background: #E2DDD6;
-    -fx-background-color: #E2DDD6;
+    -fx-base: #E2DDD6 !important;
+    -fx-background: #E2DDD6 !important;
+    -fx-background-color: #E2DDD6 !important;
+    -fx-accent: #C82B28 !important;
     -color-bg-default: #E2DDD6;
     -color-fg-default: #23201D;
     -color-fg-muted: #6E665E;
     -color-accent-emphasis: #C82B28;
 }
 
-.app-root { -fx-background-color: #E2DDD6; }
+.app-root, #mainStackPane { -fx-background-color: #E2DDD6 !important; }
 .content-background { -fx-background-color: transparent; }
 .background-pane { -fx-background-color: transparent; -fx-mouse-transparent: true; -fx-view-order: 1; }
 .main-content-pane { -fx-view-order: -1; }

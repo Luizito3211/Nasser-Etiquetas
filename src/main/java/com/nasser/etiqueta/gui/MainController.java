@@ -26,8 +26,10 @@ import java.util.*;
  */
 public class MainController {
 
+    @FXML private StackPane mainStackPane;
     @FXML private TextField tfSearch;
     @FXML private StackPane backgroundPane;
+    @FXML private BorderPane mainLayout;
     @FXML private VBox headerPane;
     @FXML private Label lblOperador;
     @FXML private Button btnTrocarOperador;
@@ -57,12 +59,19 @@ public class MainController {
     private final Map<String, Integer> quantitiesByProductId = new HashMap<>();
     private final Map<String, ProductCardComponent> cardComponents = new HashMap<>();
 
+    @FXML
+    private void initialize() {
+        mainStackPane.setStyle("-fx-background-color: #E2DDD6;");
+    }
+
     public void init(String responsavelInicial, PersistenceService persistence, ElginPrinterService printer, Stage stage) {
         this.responsavelAtual = responsavelInicial;
         this.persistenceService = persistence;
         this.printerService = printer;
         this.stage = stage;
 
+        stage.setOpacity(1.0);
+        mainLayout.setOpacity(1.0);
         configureEventLayers();
         loadBrandImages();
 

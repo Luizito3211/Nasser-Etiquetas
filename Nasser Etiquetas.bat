@@ -4,7 +4,7 @@ setlocal enabledelayedexpansion
 REM Fixa o caminho padrao do Windows
 set "PATH=%SystemRoot%\system32;%SystemRoot%;%SystemRoot%\System32\Wbem;%SystemRoot%\System32\WindowsPowerShell\v1.0\;%PATH%"
 
-REM Reabre este mesmo launcher maximizado e mantém a janela ativa.
+REM Reabre este mesmo launcher maximizado na primeira execucao
 if /i not "%~1"=="max" (
     start "" /max "%~f0" max
     exit /b 0
@@ -12,9 +12,6 @@ if /i not "%~1"=="max" (
 
 cls
 chcp 65001 >nul
-
-REM Maximiza este console sem criar uma segunda janela.
-powershell.exe -NoProfile -Command "$wshell = New-Object -ComObject WScript.Shell; $wshell.SendKeys('{ALT}{ENTER}')" >nul 2>&1
 
 REM Obtem o caractere ESC para cores ANSI
 for /f "delims=" %%A in ('echo prompt $E^| cmd') do set "ESC=%%A"
@@ -46,7 +43,7 @@ echo.                                                                  ##      -
 echo.                                                                  ##        ##          ##          ##MM
 echo.                                                                  ##        mm##        ##            ##
 echo.                                                                @@##          ##        ####            ##
-echo.                                                          ##############################################################
+echo.                                                              ##############################################################
 
 REM --- DESENHO NASSER ESFIHA (VERMELHO) ---
 <nul set /p "=!VERMELHO!"
@@ -55,14 +52,14 @@ echo.                                          MMMM@@        MM##
 echo.                                          MMMMMM        MM        MMMMMM        ##MMMMMMMM--    MMMMMMMMMM  @@MMMMMMMMMM++  MMMMMMMMCCCC
 echo.                                          MMMMMMMM      MM        MMMMMM        MM      MM    MMMM    ::MM    MMMM    ::##    MMMM  @@MMMM
 echo.                                          MMMMMMMM@@    MM        MM@@MM      ::MMMM    ++    MMMMmm    ++    MMMM            MMMM    MMMM
-echo.                                          MMMM  MMMM..  MM      MM@@  MMMM      MMMMMM@@      ##MMMMMM        MMMM    MM      MMMM    MMMM
+echo.                                          MMMM  MMMM..  MM      MM@@  MMMM      MMMMMM@@    ##MMMMMM        MMMM    MM      MMMM    MMMM
 echo.                              ++MM        MMMM  --MMMM  MM      MM    MMMM        MMMMMMMM      ##MMMMMMMM    MMMMMMMMMM      MMMMMMMMMM
 echo.                            --MM          MMMM    MMMMMMMM      MM@@@@MMMM            MMMMMM        mmMMMM    MMMM    MM      MMMM@@MM##
 echo.                            MMMM          MMMM      MMMMMM    MMMM------MMMM    ##      MMMM  MM        MM--  MMMM            MMMM  MMMM
 echo.                            --MMMM        MMMM        MMMM    MM##      MMMM    MM      MMMM  MMMM    ..MM    MMMM      MM    MMMM  --MMMM
 echo.                              MMMM      ++MMMM        ##MM  ##MMMM      MMMMMM  MMMMMMMMMM    mmMMMMMMMM    @@MMMMMMMMMMMM  @@MMMM    MMMM@@
-echo.                          MMMM++MMMM                                                                                                      MM::@@MM##
-echo.                        MMMMMMMMMMMM##                                                                                                  MMMMMMMMMMMMMM
+echo.                          MMMM++MMMM                                                                                                MM::@@MM##
+echo.                        MMMMMMMMMMMM##                                                                                              MMMMMMMMMMMMMM
 echo.                          ++++    ##MM        MMMMMMMMMMMM      ++MMMMMM    MMMMMMMMMMMM  MMMMMMMM  MMMMMMMM    MMMMMMMM      MMMMMM          ..MM      ++
 echo.                              ##MMMMMM..      MMMMmm  ..MM    @@MM    MMMM    MMMM    MM++  MMMM      MMMM        MMMM        MMMMMM          MMMMMMMM
 echo.                              MM    mmMM      mmMMmm          MMMM      @@    MMMM      @@  MMMM      MMMM        MMMM        MM  MM--        MM      MM
@@ -75,19 +72,32 @@ echo.                                              ##MMMM  ::MMMM  MMMM@@MMMM@@ 
 
 <nul set /p "=!RESET!"
 
-REM --- EXECUCAO SILENCIOSA DA APLICACAO ---
+REM --- COMPILACAO E EXECUCAO DA APLICACAO ---
 cd /d "%~dp0"
 if exist "%~dp0target\startup-ready.signal" del /q /f "%~dp0target\startup-ready.signal" >nul 2>&1
+
 echo.
-echo Iniciando o sistema Nasser Esfiha... Aguarde um momento.
+echo ============================================================
+echo   Iniciando o sistema Nasser Esfiha... Aguarde um momento.
+echo ============================================================
 echo.
 
 if exist "%~dp0target\etiqueta-app.jar" (
+    echo Executando a aplicacao via JAR compilado...
     powershell.exe -NoProfile -WindowStyle Hidden -Command "Start-Process -FilePath 'javaw.exe' -ArgumentList '-jar','target\etiqueta-app.jar' -WorkingDirectory '%~dp0' -WindowStyle Hidden" >nul 2>&1
 ) else (
-    powershell.exe -NoProfile -WindowStyle Hidden -Command "Start-Process -FilePath 'cmd.exe' -ArgumentList '/d','/c','mvnw.cmd -q javafx:run' -WorkingDirectory '%~dp0' -WindowStyle Hidden" >nul 2>&1
+    echo Compilando e iniciando a aplicacao via Maven Wrapper...
+    if exist "%~dp0mvnw.cmd" (
+        call mvnw.cmd -q javafx:run
+    ) else (
+        call mvn -q javafx:run
+    )
 )
 
-echo Aplicacao iniciada. Este console permanecera aberto.
-echo Feche esta janela manualmente quando desejar.
-pause >nul
+echo.
+echo ============================================================
+echo   Aplicacao iniciada com sucesso!
+echo   Este console permanecera aberto para monitoramento.
+echo ============================================================
+echo.
+pause

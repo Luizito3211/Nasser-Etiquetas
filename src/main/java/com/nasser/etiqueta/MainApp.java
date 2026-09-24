@@ -11,9 +11,11 @@ import javafx.application.Platform;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
+import javafx.scene.paint.Color;
 import javafx.geometry.Rectangle2D;
 import javafx.stage.Screen;
 import javafx.stage.Stage;
+import javafx.stage.StageStyle;
 
 import java.util.Objects;
 import java.util.Optional;
@@ -49,9 +51,9 @@ public class MainApp extends Application {
         String operador = operadorOpt.get();
 
         try {
-            // Suporte a decorações integradas / estilo unificado
+            // Usa decoração padrão opaca para impedir composição transparente do DWM.
             try {
-                primaryStage.initStyle(javafx.stage.StageStyle.UNIFIED);
+                primaryStage.initStyle(StageStyle.DECORATED);
             } catch (Exception ignored) {
             }
 
@@ -59,13 +61,14 @@ public class MainApp extends Application {
             Parent root = loader.load();
 
             Scene scene = new Scene(root, 1020, 720);
-            scene.setFill(javafx.scene.paint.Color.web("#E2DDD6"));
+            scene.setFill(Color.web("#E2DDD6"));
 
             // Carrega CSS customizado da aplicação
             String css = Objects.requireNonNull(getClass().getResource("/css/style.css")).toExternalForm();
             scene.getStylesheets().add(css);
 
             primaryStage.setTitle("Nasser Etiquetas - Gestão e Impressão");
+            primaryStage.setOpacity(1.0);
             WindowUtils.applyAppIcon(primaryStage);
             primaryStage.setMinWidth(960);
             primaryStage.setMinHeight(640);
@@ -109,7 +112,7 @@ public class MainApp extends Application {
         // Fallback de renderização para evitar artefatos de cor em drivers instáveis.
         System.setProperty("prism.forceGPU", "false");
         System.setProperty("prism.allowhidpi", "true");
-        System.setProperty("prism.order", "d3d,sw");
+        System.setProperty("prism.order", "sw,d3d");
         launch(args);
     }
 }
