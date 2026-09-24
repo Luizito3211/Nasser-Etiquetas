@@ -4,11 +4,14 @@ setlocal enabledelayedexpansion
 REM Fixa o caminho padrao do Windows
 set "PATH=%SystemRoot%\system32;%SystemRoot%;%SystemRoot%\System32\Wbem;%SystemRoot%\System32\WindowsPowerShell\v1.0\;%PATH%"
 
-REM Reabre este mesmo launcher maximizado na primeira execucao
-if /i not "%~1"=="max" (
-    start "" /max "%~f0" max
-    exit /b 0
+REM Tenta maximizar a janela do prompt
+if not "%1"=="max" (
+    start "" /max "%~0" max
+    exit /b
 )
+
+REM Forca modo tela cheia
+powershell -NoProfile -Command "$wshell = New-Object -ComObject WScript.Shell; $wshell.SendKeys('{ALT}{ENTER}')" >nul 2>&1
 
 cls
 chcp 65001 >nul
@@ -72,32 +75,21 @@ echo.                                              ##MMMM  ::MMMM  MMMM@@MMMM@@ 
 
 <nul set /p "=!RESET!"
 
-REM --- COMPILACAO E EXECUCAO DA APLICACAO ---
+REM --- COMPILACAO E EXECUCAO SINCRONIZADA ---
 cd /d "%~dp0"
-if exist "%~dp0target\startup-ready.signal" del /q /f "%~dp0target\startup-ready.signal" >nul 2>&1
-
-echo.
-echo ============================================================
-echo   Iniciando o sistema Nasser Esfiha... Aguarde um momento.
-echo ============================================================
-echo.
 
 if exist "%~dp0target\etiqueta-app.jar" (
-    echo Executando a aplicacao via JAR compilado...
+    REM Se ja existir o JAR, dispara em background e fecha apos 2 segundos
     powershell.exe -NoProfile -WindowStyle Hidden -Command "Start-Process -FilePath 'javaw.exe' -ArgumentList '-jar','target\etiqueta-app.jar' -WorkingDirectory '%~dp0' -WindowStyle Hidden" >nul 2>&1
+    timeout /t 2 /nobreak >nul
 ) else (
-    echo Compilando e iniciando a aplicacao via Maven Wrapper...
+    REM Se precisar compilar via Maven, aguarda o termino da compilacao silenciosamente mantendo a imagem na tela
     if exist "%~dp0mvnw.cmd" (
-        call mvnw.cmd -q javafx:run
+        call mvnw.cmd -q javafx:run >nul 2>&1
     ) else (
-        call mvn -q javafx:run
+        call mvn -q javafx:run >nul 2>&1
     )
 )
 
-echo.
-echo ============================================================
-echo   Aplicacao iniciada com sucesso!
-echo   Este console permanecera aberto para monitoramento.
-echo ============================================================
-echo.
-pause
+REM Apos a compilacao/execucao finalizar, encerra o terminal
+exit
