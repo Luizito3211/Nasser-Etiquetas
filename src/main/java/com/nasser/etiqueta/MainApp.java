@@ -4,6 +4,7 @@ import atlantafx.base.theme.CupertinoDark;
 import com.nasser.etiqueta.gui.LoginDialogFX;
 import com.nasser.etiqueta.gui.MainController;
 import com.nasser.etiqueta.gui.WindowUtils;
+import com.nasser.etiqueta.service.AppEnvironment;
 import com.nasser.etiqueta.service.ElginPrinterService;
 import com.nasser.etiqueta.service.PersistenceService;
 import javafx.application.Application;
@@ -19,6 +20,8 @@ import javafx.stage.StageStyle;
 
 import java.util.Objects;
 import java.util.Optional;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  * Ponto de entrada JavaFX da aplicação Nasser Etiquetas.
@@ -26,11 +29,14 @@ import java.util.Optional;
  */
 public class MainApp extends Application {
 
+    private static final Logger LOGGER = Logger.getLogger(MainApp.class.getName());
+
     private PersistenceService persistenceService;
     private ElginPrinterService printerService;
 
     @Override
     public void init() {
+        AppEnvironment.init();
         this.persistenceService = new PersistenceService();
         this.printerService = new ElginPrinterService();
     }
@@ -104,11 +110,12 @@ public class MainApp extends Application {
             });
 
         } catch (Exception e) {
-            e.printStackTrace();
+            LOGGER.log(Level.SEVERE, "Erro durante inicialização da interface JavaFX: " + e.getMessage(), e);
         }
     }
 
     public static void main(String[] args) {
+        AppEnvironment.init();
         // Fallback de renderização para evitar artefatos de cor em drivers instáveis.
         System.setProperty("prism.forceGPU", "false");
         System.setProperty("prism.allowhidpi", "true");

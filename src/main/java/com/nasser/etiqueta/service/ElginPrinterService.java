@@ -11,12 +11,16 @@ import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  * Serviço de integração com a impressora Elgin L42 Pro Full.
  * Renderiza o layout dinâmico e livre como bitmap e converte para comandos gráficos ZPL nativos (^GF).
  */
 public class ElginPrinterService {
+
+    private static final Logger LOGGER = Logger.getLogger(ElginPrinterService.class.getName());
 
     public static class ElginPrintException extends Exception {
         public ElginPrintException(String message) {
@@ -97,7 +101,7 @@ public class ElginPrinterService {
                             }
                         }
                     } catch (Exception ex) {
-                        System.err.println("Erro ao desenhar imagem na impressão: " + ex.getMessage());
+                        LOGGER.log(Level.WARNING, "Erro ao desenhar imagem na impressão: " + ex.getMessage(), ex);
                     }
                 }
             } else {
@@ -194,7 +198,9 @@ public class ElginPrinterService {
 
         PrintService printService = findPrintService(printerName);
         if (printService == null) {
-            throw new ElginPrintException("A impressora '" + printerName + "' não foi encontrada no sistema.");
+            String msg = "A impressora '" + printerName + "' não foi encontrada no sistema operacional.";
+            LOGGER.warning(msg);
+            throw new ElginPrintException(msg);
         }
 
         try {
@@ -207,11 +213,16 @@ public class ElginPrinterService {
 
             DocPrintJob job = printService.createPrintJob();
             job.print(doc, null);
+            LOGGER.info("Etiqueta impressa com sucesso: " + data.nomeProduto() + " (qtd: " + quantidade + ", impressora: " + printerName + ")");
 
         } catch (PrintException e) {
-            throw new ElginPrintException("Erro ao enviar comandos ZPL de imagem gráfica ao Spooler.", e);
+            String msg = "Erro ao enviar comandos ZPL de imagem gráfica ao Spooler da impressora '" + printerName + "'. Verifique se a impressora está ligada, conectada e com papel.";
+            LOGGER.log(Level.SEVERE, msg, e);
+            throw new ElginPrintException(msg, e);
         } catch (Exception e) {
-            throw new ElginPrintException("Erro no pipeline de impressão gráfica: " + e.getMessage(), e);
+            String msg = "Erro no pipeline de impressão gráfica: " + e.getMessage();
+            LOGGER.log(Level.SEVERE, msg, e);
+            throw new ElginPrintException(msg, e);
         }
     }
 }

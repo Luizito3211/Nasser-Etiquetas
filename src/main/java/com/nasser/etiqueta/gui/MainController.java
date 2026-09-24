@@ -18,6 +18,8 @@ import java.io.InputStream;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  * Controller principal da interface JavaFX (MVC).
@@ -25,6 +27,8 @@ import java.util.*;
  * ao design da marca Nasser Esfihas.
  */
 public class MainController {
+
+    private static final Logger LOGGER = Logger.getLogger(MainController.class.getName());
 
     @FXML private StackPane mainStackPane;
     @FXML private TextField tfSearch;
@@ -540,6 +544,7 @@ public class MainController {
     private void handlePrintSelected() {
         String printerName = persistenceService.getSelectedPrinter();
         if (printerName == null || printerName.isBlank()) {
+            LOGGER.warning("Tentativa de impressão sem impressora Elgin configurada.");
             showAlert(Alert.AlertType.WARNING, "Impressora Não Selecionada",
                     "Nenhuma impressora Elgin foi configurada como padrão.\nConfigure em 'Configuração do Layout'.");
             return;
@@ -547,6 +552,7 @@ public class MainController {
 
         List<ElementoLayout> layoutElements = persistenceService.loadLayoutElements();
         if (layoutElements.isEmpty()) {
+            LOGGER.warning("Tentativa de impressão com layout de etiquetas vazio.");
             showAlert(Alert.AlertType.WARNING, "Layout Vazio",
                     "O arquivo de layout visual não possui elementos cadastrados.");
             return;
@@ -584,6 +590,7 @@ public class MainController {
                         imprimiuAlgum = true;
                         totalImpressos += qty;
                     } catch (ElginPrinterService.ElginPrintException ex) {
+                        LOGGER.log(Level.WARNING, "Erro ao imprimir etiqueta para o produto '" + p.getNome() + "': " + ex.getMessage(), ex);
                         erros.append("Erro ao imprimir ").append(p.getNome()).append(": ").append(ex.getMessage()).append("\n");
                     }
                 }
@@ -598,16 +605,19 @@ public class MainController {
             }
 
             if (erros.length() > 0) {
+                LOGGER.warning("Impressão em lote parcial concluída com avisos (" + totalImpressos + " etiquetas). Erros:\n" + erros);
                 setStatus("Impressão concluída com alguns avisos.", true);
                 showAlert(Alert.AlertType.WARNING, "Retorno da Impressão",
                         "Impressão concluída (" + totalImpressos + " etiquetas) com avisos:\n" + erros);
             } else {
+                LOGGER.info("Impressão em lote concluída com sucesso. Total: " + totalImpressos + " etiqueta(s) impressa(s).");
                 setStatus("Sucesso: " + totalImpressos + " etiqueta(s) impressa(s).", false);
                 showAlert(Alert.AlertType.INFORMATION, "Sucesso",
                         "Impressão em lote enviada à Elgin L42 com sucesso!\nTotal de etiquetas: " + totalImpressos);
             }
         } else {
             if (erros.length() > 0) {
+                LOGGER.severe("Falha total na operação de impressão em lote:\n" + erros);
                 showAlert(Alert.AlertType.ERROR, "Erro na Operação",
                         "Falha ao realizar a impressão em lote:\n" + erros);
             } else {
