@@ -1,0 +1,46 @@
+# Executáveis e builds (Maven / Gradle / JavaFX)
+target/
+build/
+out/
+bin/
+*.jar
+*.war
+*.ear
+*.class
+.maven/
+
+# Ambientes e configurações de IDE
+.vscode/
+*.code-workspace
+.idea/
+*.iml
+*.iws
+*.ipr
+.settings/
+.project
+.classpath
+
+# Arquivos locais, bancos de dados e cache
+*.db
+*.sqlite
+*.sqlite3
+*.log
+*.tmp
+temp/
+
+# Configurações de ambiente e chaves
+.env
+.env.*
+secrets.*
+*.pfx
+*.keystore
+*.jks
+
+# Logs e arquivos de sistema
+hs_err_pid*
+replay_pid*
+[Dd]esktop.ini
+Thumbs.db
+.DS_Store
+.DS_Store?
+ehthumbs.db

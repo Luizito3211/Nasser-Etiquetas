@@ -1,0 +1,118 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.image.ImageView?>
+<?import javafx.scene.layout.*?>
+
+<StackPane xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1"
+        fx:controller="com.nasser.etiqueta.gui.MainController"
+        styleClass="app-root" prefWidth="1020.0" prefHeight="720.0">
+
+    <StackPane fx:id="backgroundPane" mouseTransparent="true" pickOnBounds="false"
+         styleClass="background-pane">
+     <ImageView fx:id="solImageView" fitWidth="1300" preserveRatio="true" smooth="true" opacity="0.35"
+             mouseTransparent="true" pickOnBounds="false" translateX="400" translateY="-150"
+             StackPane.alignment="BOTTOM_RIGHT" styleClass="sun-watermark" />
+    </StackPane>
+
+    <BorderPane fx:id="mainLayout" styleClass="main-content-pane" mouseTransparent="false"
+                style="-fx-background-color: transparent;">
+
+    <!-- ====================================================================== -->
+    <!-- TOPO: HEADER & TOOLBAR COM BUSCA RÁPIDA, STATUS DO OPERADOR E ATALHOS -->
+    <!-- ====================================================================== -->
+    <top>
+        <VBox fx:id="headerPane" styleClass="header-root" mouseTransparent="false" pickOnBounds="true">
+            <!-- 1. Header Principal -->
+            <HBox alignment="CENTER_LEFT" spacing="16" styleClass="header-bar">
+                <HBox alignment="CENTER_LEFT" spacing="10">
+                    <ImageView fx:id="cameloImageView" fitHeight="38" preserveRatio="true" smooth="true" styleClass="camel-mark" />
+                    <VBox spacing="1">
+                        <Label text="Nasser Etiquetas" styleClass="text-title" />
+                        <Label text="Gestão e Impressão Elgin L42 Pro" styleClass="text-subtitle" />
+                    </VBox>
+                </HBox>
+
+                <!-- Barra de Busca Rápida de Produtos Centralizada com Ícone de Lupa -->
+                <HBox alignment="CENTER" HBox.hgrow="ALWAYS">
+                    <HBox.margin>
+                        <Insets left="14" right="14" />
+                    </HBox.margin>
+                    <StackPane alignment="CENTER_LEFT" maxWidth="520" HBox.hgrow="ALWAYS">
+                        <TextField fx:id="tfSearch" promptText="Buscar produto por nome, SIF ou armazenamento..."
+                                   styleClass="search-field" prefHeight="34" />
+                    </StackPane>
+                </HBox>
+
+                <!-- Status do Operador Ativo -->
+                <HBox alignment="CENTER_RIGHT" spacing="8">
+                    <HBox alignment="CENTER" spacing="8" styleClass="operator-badge">
+                        <Label fx:id="lblOperador" text="Responsável: Admin" style="-fx-text-fill: #23201D; -fx-font-size: 12px; -fx-font-weight: bold;" />
+                    </HBox>
+                    <Button fx:id="btnTrocarOperador" text="Trocar" styleClass="button" onAction="#handleTrocarOperador" />
+                </HBox>
+            </HBox>
+
+            <!-- 2. Sub-Header: Atalhos Rápidos & Gestão de Presets -->
+            <HBox alignment="CENTER_LEFT" spacing="8" styleClass="sub-header-bar">
+                <!-- Atalhos Rápidos -->
+                <Button fx:id="btnAddCategory" text="Nova Pasta" styleClass="button btn-primary toolbar-action" onAction="#handleAddCategory" />
+
+                <Button fx:id="btnAddProduct" text="Novo Produto" styleClass="button btn-success toolbar-action" onAction="#handleAddProduct" />
+
+                <Separator orientation="VERTICAL" maxHeight="18" />
+
+                <!-- Presets de Impressão -->
+                <HBox alignment="CENTER_LEFT" spacing="6">
+                    <Label text="Presets:" style="-fx-text-fill: #6E665E; -fx-font-size: 12px; -fx-font-weight: bold;" />
+                    <ComboBox fx:id="cbPresets" prefWidth="170" prefHeight="30" promptText="Selecione..." styleClass="preset-combo" />
+                    <Button fx:id="btnApplyPreset" text="Aplicar" styleClass="button toolbar-action" onAction="#handleApplyPreset" />
+                    <Button fx:id="btnSavePreset" text="Salvar" styleClass="button toolbar-action" onAction="#handleSavePreset" />
+                    <Button fx:id="btnDeletePreset" text="Excluir" styleClass="button btn-danger toolbar-action" onAction="#handleDeletePreset" />
+                </HBox>
+
+                <Region HBox.hgrow="ALWAYS" />
+
+                <!-- Configuração do Layout -->
+                <Button fx:id="btnConfigLayout" text="Configuração do Layout" styleClass="button toolbar-layout-action" onAction="#handleConfigLayout" />
+            </HBox>
+        </VBox>
+    </top>
+
+    <!-- ====================================================================== -->
+    <!-- CENTRO: SCROLLPANE COM CARDS DE CATEGORIAS E PRODUTOS                 -->
+    <!-- ====================================================================== -->
+    <center>
+        <StackPane styleClass="content-background">
+            <ScrollPane fx:id="scrollPane" fitToWidth="true" styleClass="content-scroll">
+                <VBox fx:id="categoriesContainer" spacing="16" styleClass="cards-container" />
+            </ScrollPane>
+        </StackPane>
+    </center>
+
+    <!-- ====================================================================== -->
+    <!-- RODAPÉ: STATUS DA IMPRESSORA + BOTÃO DE IMPRESSÃO EM LOTE ACCENT BLUE  -->
+    <!-- ====================================================================== -->
+    <bottom>
+        <HBox alignment="CENTER_LEFT" spacing="20" styleClass="footer-bar">
+            <!-- Indicador Visual de Status da Impressora (LED + Nome) -->
+            <HBox alignment="CENTER_LEFT" spacing="10">
+                <Region fx:id="ledPrinterStatus" styleClass="led-status led-offline" />
+                <Label fx:id="lblPrinterName" text="Impressora: Não configurada"
+                       style="-fx-text-fill: #23201D; -fx-font-size: 13px; -fx-font-weight: bold;" />
+            </HBox>
+
+            <!-- Mensagem de Status / Retorno -->
+            <Label fx:id="lblStatus" text="Pronto"
+                   style="-fx-text-fill: #6E665E; -fx-font-size: 12px; -fx-font-style: italic;" HBox.hgrow="ALWAYS" />
+
+            <Region HBox.hgrow="ALWAYS" />
+
+            <!-- Botão Principal de Ação: Imprimir Selecionados -->
+            <Button fx:id="btnPrintSelected" text="IMPRIMIR SELECIONADOS (LOTE)"
+                    styleClass="btn-print-action" onAction="#handlePrintSelected" />
+        </HBox>
+    </bottom>
+    </BorderPane>
+</StackPane>

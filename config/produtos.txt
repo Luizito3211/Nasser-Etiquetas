@@ -1,8 +1,6 @@
 [CATEGORIA:Nasser Esfihas]
 Carne;;Refrigerado (até 4°C);3;98a5208b-3426-44df-830b-e3f224c7d5d0
 Mussarela;171;Refrigerado (até 4°C);3;e12a6c5e-ab3b-455d-978f-7b46210aa9e8
-Frango;;Refrigerado (até 4°C);3;c4b52edc-520c-4000-95b6-5f4f9c4c77f4
-Calabresa;1466;Refrigerado (até 4°C);3;10f5c65b-c6cb-406c-aaf1-653a6cae27d2
 Pepperoni;;Refrigerado (até 4°C);3;087212c7-6a48-4c62-b640-0068438f91b5
 4 Queijos;;Refrigerado (até 4°C);3;ebfc3da1-8e75-4505-97f6-ff2b2ff77f16
 Atum;2087;Refrigerado (até 4°C);3;d9126ae2-d3de-44a9-873c-1dd588ddcda7
@@ -23,8 +21,6 @@ Bauru;;Refrigerado (até 4°C);3;c2dd791c-3570-42e9-af59-1afcf1820141
 Portuguesa;;Refrigerado (até 4°C);3;2ba40e0e-9157-4646-abf7-e7927739eb68
 Presunto;60;Refrigerado (até 4°C);3;a323353e-cb08-4caf-bd50-3e0a411e2a95
 Rosbife;;Refrigerado (até 4°C);3;8d54068e-3cfd-4f89-ad6a-4d707a9c625a
-Salame;772;Refrigerado (até 4°C);3;bfc5b7ae-6493-4700-86c4-11d51d437126
-Carne Seca;;Refrigerado (até 4°C);3;1d17af44-e4fa-45e5-8e84-645c35bbbb2a
 Goiabada;;Refrigerado (até 4°C);14;d98c675d-84c1-4ddd-b2aa-b93f01c35e56
 Azeitona;;Refrigerado (até 4°C);9;9a814a00-ac12-4638-ae10-a85efa16354e
 Leite Condensado;3810;Refrigerado (até 4°C);9;14b8eb6c-3294-47eb-859b-9aa744ad02b6
@@ -32,3 +28,7 @@ Doce Leite;1093;Refrigerado (até 4°C);29;54bdab99-76ea-4981-911f-708cf6c5df24
 Tomate Seco;;Refrigerado (até 4°C);29;66ece5f0-5596-4b23-8bdf-c762d7edbd10
 Leite;;Refrigerado (até 4°C);1;fbb29683-2922-468f-94c0-0ca90fcc2ad5
 Rucula;;Refrigerado (até 4°C);2;484a1d34-5df4-4ab7-91fc-0db1c93061e3
+Carne Seca;;Refrigerado (até 4°C);3;1d17af44-e4fa-45e5-8e84-645c35bbbb2a
+Salame;772;Refrigerado (até 4°C);3;bfc5b7ae-6493-4700-86c4-11d51d437126
+Calabresa;1466;Refrigerado (até 4°C);3;10f5c65b-c6cb-406c-aaf1-653a6cae27d2
+Frango;;Refrigerado (até 4°C);3;c4b52edc-520c-4000-95b6-5f4f9c4c77f4
