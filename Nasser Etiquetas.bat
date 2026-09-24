@@ -4,17 +4,17 @@ setlocal enabledelayedexpansion
 REM Fixa o caminho padrao do Windows
 set "PATH=%SystemRoot%\system32;%SystemRoot%;%SystemRoot%\System32\Wbem;%SystemRoot%\System32\WindowsPowerShell\v1.0\;%PATH%"
 
-REM Tenta maximizar a janela do prompt
-if not "%1"=="max" (
-    start "" /max "%~0" max
-    exit
+REM Reabre este mesmo launcher maximizado e mantém a janela ativa.
+if /i not "%~1"=="max" (
+    start "" /max "%~f0" max
+    exit /b 0
 )
-
-REM Forca modo tela cheia
-powershell -NoProfile -Command "$wshell = New-Object -ComObject WScript.Shell; $wshell.SendKeys('{ALT}{ENTER}')" >nul 2>&1
 
 cls
 chcp 65001 >nul
+
+REM Maximiza este console sem criar uma segunda janela.
+powershell.exe -NoProfile -Command "$wshell = New-Object -ComObject WScript.Shell; $wshell.SendKeys('{ALT}{ENTER}')" >nul 2>&1
 
 REM Obtem o caractere ESC para cores ANSI
 for /f "delims=" %%A in ('echo prompt $E^| cmd') do set "ESC=%%A"
@@ -77,7 +77,17 @@ echo.                                              ##MMMM  ::MMMM  MMMM@@MMMM@@ 
 
 REM --- EXECUCAO SILENCIOSA DA APLICACAO ---
 cd /d "%~dp0"
-start "" /b cmd /d /c ""%~dp0iniciar.bat" >nul 2>&1"
+if exist "%~dp0target\startup-ready.signal" del /q /f "%~dp0target\startup-ready.signal" >nul 2>&1
+echo.
+echo Iniciando o sistema Nasser Esfiha... Aguarde um momento.
+echo.
 
-timeout /t 2 /nobreak >nul
-exit
+if exist "%~dp0target\etiqueta-app.jar" (
+    powershell.exe -NoProfile -WindowStyle Hidden -Command "Start-Process -FilePath 'javaw.exe' -ArgumentList '-jar','target\etiqueta-app.jar' -WorkingDirectory '%~dp0' -WindowStyle Hidden" >nul 2>&1
+) else (
+    powershell.exe -NoProfile -WindowStyle Hidden -Command "Start-Process -FilePath 'cmd.exe' -ArgumentList '/d','/c','mvnw.cmd -q javafx:run' -WorkingDirectory '%~dp0' -WindowStyle Hidden" >nul 2>&1
+)
+
+echo Aplicacao iniciada. Este console permanecera aberto.
+echo Feche esta janela manualmente quando desejar.
+pause >nul
