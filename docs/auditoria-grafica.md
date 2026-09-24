@@ -66,9 +66,7 @@ A aplicação utiliza uma arquitetura híbrida de estilização:
 | `com.nasser.etiqueta.gui.LayoutEditorDialogFX` | Classe Java | **USADO** | Editor interativo de layout da etiqueta Elgin L42 Pro com visualização em Canvas. |
 | `com.nasser.etiqueta.gui.WindowsDarkThemeHelper`| Classe Java | **USADO** | Integração nativa via JNA para título escuro da janela no Windows 10/11. |
 | `com.nasser.etiqueta.gui.WindowUtils` | Classe Java | **USADO** | Configura o ícone da marca em todos os estágios (`stage.getIcons()`). |
-| Imports não utilizados em `MainController.java` | Código Java | **OBSOLETO** | `java.time.LocalDate`, `java.time.LocalDateTime`, `javafx.collections.FXCollections`. |
-| Imports não utilizados em `LayoutEditorDialogFX.java` | Código Java | **OBSOLETO** | `java.io.FileInputStream`, `javafx.scene.text.FontWeight`. |
-| Comentários que citam *"Apple Dark Matte"* e *"ACCENT BLUE"* | Código/FXML | **OBSOLETO** | Javadocs e comentários remanescentes da refatoração anterior que conflitam com o nome do tema da marca. |
+| Comentários que citavam *"Apple Dark Matte"* e *"ACCENT BLUE"* | Código/FXML | **OBSOLETO (Resolvido)** | Javadocs e comentários atualizados para refletir o design da marca Nasser Esfihas. |
 | `com.nasser.etiqueta.service.ElginPrinterService` (`java.awt.*`) | Serviço | **USADO (Impressão)** | O uso de AWT (`Graphics2D`, `BufferedImage`) é estritamente de impressão (rasterização off-screen para comando ZPL `^GF`), e não interface gráfica. Nenhum Swing existe no código. |
 
 ---
@@ -111,12 +109,30 @@ Antes de qualquer remoção destes itens, solicitamos sua decisão formal:
 
 1. **`src/main/java/com/nasser/etiqueta/Main.java` e `MANIFEST.MF` da raiz**:
    - *Contexto*: A classe [Launcher.java](file:///c:/Users/User/Documents/Etiqueta/src/main/java/com/nasser/etiqueta/Launcher.java) é o ponto de entrada oficial configurado no `pom.xml` e no `jpackage`. A classe [Main.java](file:///c:/Users/User/Documents/Etiqueta/src/main/java/com/nasser/etiqueta/Main.java) e o `MANIFEST.MF` da raiz são cópias antigas.
-   - *Pergunta*: Podemos remover `Main.java` e `MANIFEST.MF` da raiz para evitar duplicidade de launchers?
+   - *Decisão necessária*: Podemos remover `Main.java` e `MANIFEST.MF` da raiz para evitar duplicidade de launchers?
 
 2. **Diretório raiz `img/` (`img/Camelo.png`, `img/LogoStage.jpg`, `img/Sol.png`)**:
    - *Contexto*: Todas as imagens da interface são carregadas a partir de `src/main/resources/img/` via classpath dentro do JAR. A pasta `img/` na raiz do projeto não faz parte do build do Maven nem é distribuída pelo `jpackage`.
-   - *Pergunta*: Podemos remover a pasta `img/` da raiz do repositório?
+   - *Decisão necessária*: Podemos remover a pasta `img/` da raiz do repositório?
 
 3. **Diretório raiz `game-hub/`**:
    - *Contexto*: Trata-se de um projeto web de minijogos (Snake, Clicker, Parkour) inserido por engano no repositório no commit da versão 2.0. Não possui nenhuma chamada ou vínculo com o código Java.
-   - *Pergunta*: Podemos remover o diretório `game-hub/` do repositório?
+   - *Decisão necessária*: Podemos remover o diretório `game-hub/` do repositório?
+
+---
+
+## 4. Progresso da Execução
+
+- [x] **Fase 1 (Auditoria Completa)**: Mapeamento de todas as dependências, classes, folhas de estilo e recursos.
+- [x] **Fase 2 (Relatório)**: Gerado e commitado em `docs/auditoria-grafica.md` (commit `6c608f2`).
+- [x] **Fase 3 (Limpeza de Obsoletos Confirmados)**:
+  - Commit `6820136`: `chore(deps): remove dependencias graficas nao utilizadas (ikonli)`
+    - Removidas 3 dependências Ikonli (`ikonli-javafx`, `ikonli-feather-pack`, `ikonli-fontawesome5-pack`) e a propriedade `<ikonli.version>`.
+    - **Ganho de tamanho**: Redução de **392,6 KB** no Fat JAR (de 14.126.827 para 13.734.220 bytes) e eliminação de avisos de colisão de recursos no Maven Shade.
+  - Commit `006b75a`: `chore(ui): atualiza comentarios para refletir identidade da marca Nasser Esfihas`
+    - Atualizados comentários em `MainApp.java`, `MainController.java`, `LoginDialogFX.java`, `ProdutoDialogFX.java`, `ProductCardComponent.java`, `LayoutEditorDialogFX.java` e `MainView.fxml`.
+- [x] **Fase 4 (Verificação)**:
+  - `mvnw.cmd clean package` compilou com sucesso (`BUILD SUCCESS`) em 16.9s.
+  - Execução do Fat JAR testada e confirmada (janela iniciou com sucesso e permaneceu ativa sem erros).
+- [ ] **Próximo Passo**: Aguardar decisão do usuário sobre os itens INCERTOS (seção 3) para eventual remoção ou merge do branch `chore/limpeza-grafica`.
+
