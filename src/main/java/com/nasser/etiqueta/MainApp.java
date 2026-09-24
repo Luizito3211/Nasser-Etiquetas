@@ -106,6 +106,10 @@ public class MainApp extends Application {
     }
 
     public static void main(String[] args) {
+        // Fallback de renderização para evitar artefatos de cor em drivers instáveis.
+        System.setProperty("prism.forceGPU", "false");
+        System.setProperty("prism.allowhidpi", "true");
+        System.setProperty("prism.order", "d3d,sw");
         launch(args);
     }
 }
