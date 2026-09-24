@@ -2,6 +2,8 @@
 
 Sistema desktop em Java para automação e gestão da impressão de etiquetas de validade para a **Nasser Esfihas**, integrado a impressoras térmicas (ex: Elgin L42 Pro). Desenvolvido com **Java 21**, **JavaFX 21** e tema **AtlantaFX (Cupertino Dark)**.
 
+<!-- TODO: adicionar screenshots em docs/img/ -->
+
 ---
 
 ## 🚀 Para Usuários (Lojas / Operadores)
@@ -19,6 +21,14 @@ Sistema desktop em Java para automação e gestão da impressão de etiquetas de
 
 ### Requisitos do Sistema
 - **Nenhum pré-requisito!** Não é necessário instalar Java, Maven, configurar variáveis de ambiente (`PATH`) ou ter permissões de administrador. O programa já inclui seu próprio runtime Java isolado, ícone oficial e todas as dependências embutidas.
+
+### 📁 Local dos Dados e Logs
+
+- **Configurações e Dados:** `%APPDATA%\Nasser Etiquetas\config`
+  - Armazena a lista de produtos (`produtos.txt`), layout ZPL (`layout.zpl`), preferências gerais (`app.properties`), configuração visual (`layout_elements.txt`) e presets de impressão (`presets.txt`).
+  - Em outros sistemas operacionais ou quando `%APPDATA%` não estiver definido, utiliza o diretório `~/.nasser-etiquetas/config`.
+- **Logs da Aplicação:** `%APPDATA%\Nasser Etiquetas\logs`
+  - Arquivos rotativos de log (`nasser-etiquetas.0.log`), limitados a 2 MB por arquivo e mantendo até 5 arquivos históricos para diagnóstico de eventuais problemas de impressão ou falhas inesperadas.
 
 ---
 
