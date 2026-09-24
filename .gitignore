@@ -3,7 +3,10 @@ target/
 build/
 out/
 bin/
+dist/
+dependency-reduced-pom.xml
 *.jar
+!.mvn/wrapper/maven-wrapper.jar
 *.war
 *.ear
 *.class
