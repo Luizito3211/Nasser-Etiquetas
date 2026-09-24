@@ -22,7 +22,7 @@ import java.util.Optional;
 
 /**
  * Ponto de entrada JavaFX da aplicação Nasser Etiquetas.
- * Configura o tema AtlantaFX Cupertino Dark e carrega os estilos Apple Dark Matte.
+ * Configura o tema AtlantaFX Cupertino Dark como base e carrega os estilos da marca Nasser Esfihas.
  */
 public class MainApp extends Application {
 

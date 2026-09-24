@@ -19,7 +19,7 @@ import java.util.Optional;
 
 /**
  * Diálogo modal para Cadastro e Edição de Produtos em JavaFX.
- * Estilizado com o tema Apple Dark Matte.
+ * Estilizado com o tema da marca Nasser Esfihas.
  */
 public class ProdutoDialogFX {
 

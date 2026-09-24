@@ -16,8 +16,8 @@ import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
 /**
- * Componente visual do Card de Produto, estilizado no padrão Apple Dark Matte
- * com ícones vetoriais Ikonli, badges de validade/armazenamento e controle de quantidade.
+ * Componente visual do Card de Produto, estilizado no padrão visual da marca Nasser Esfihas
+ * com badges de validade/armazenamento e controle de quantidade.
  */
 public class ProductCardComponent extends HBox {
 

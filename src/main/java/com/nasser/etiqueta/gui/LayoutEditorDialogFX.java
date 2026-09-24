@@ -386,7 +386,7 @@ public class LayoutEditorDialogFX {
         dialog.setTitle("Adicionar Tag Dinâmica");
         dialog.setHeaderText("Selecione o dado dinâmico da etiqueta:");
         dialog.initOwner(stage);
-        // Apple Dark Matte theming
+        // Theming da marca Nasser Esfihas
         dialog.getDialogPane().setStyle("-fx-background-color: #EFEBE6;");
         try {
             String dialogCss = Objects.requireNonNull(getClass().getResource("/css/style.css")).toExternalForm();

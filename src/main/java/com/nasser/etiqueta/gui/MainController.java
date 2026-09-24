@@ -22,7 +22,7 @@ import java.util.*;
 /**
  * Controller principal da interface JavaFX (MVC).
  * Conecta toda a lógica de negócio, modelos, persistência e serviços de impressão
- * ao design Apple Dark Matte.
+ * ao design da marca Nasser Esfihas.
  */
 public class MainController {
 
@@ -633,7 +633,7 @@ public class MainController {
     }
 
     /**
-     * Aplica o tema Apple Dark Matte a qualquer dialog padrão do JavaFX.
+     * Aplica o tema da marca Nasser Esfihas a qualquer dialog padrão do JavaFX.
      */
     private void styleDialog(javafx.scene.control.Dialog<?> dialog) {
         javafx.scene.control.DialogPane pane = dialog.getDialogPane();

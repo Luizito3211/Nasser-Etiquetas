@@ -92,7 +92,7 @@
     </center>
 
     <!-- ====================================================================== -->
-    <!-- RODAPÉ: STATUS DA IMPRESSORA + BOTÃO DE IMPRESSÃO EM LOTE ACCENT BLUE  -->
+    <!-- RODAPÉ: STATUS DA IMPRESSORA + BOTÃO DE IMPRESSÃO EM LOTE                 -->
     <!-- ====================================================================== -->
     <bottom>
         <HBox alignment="CENTER_LEFT" spacing="20" styleClass="footer-bar">

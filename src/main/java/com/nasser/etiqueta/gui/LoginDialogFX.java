@@ -19,7 +19,7 @@ import java.util.Optional;
 
 /**
  * Diálogo modal moderno de Identificação do Operador.
- * Alinhado ao padrão visual Apple Dark Matte.
+ * Alinhado ao padrão visual da marca Nasser Esfihas.
  */
 public class LoginDialogFX {
 
