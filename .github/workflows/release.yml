@@ -1,0 +1,103 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build-and-release:
+    name: Build & Release (Windows)
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout do repositório
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Configurar Java 21 (Temurin)
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+          cache: 'maven'
+
+      - name: Configurar WiX Toolset no PATH
+        shell: pwsh
+        run: |
+          # No runner windows-latest, o WiX Toolset v3.11 vem pré-instalado
+          $wixPaths = @(
+            "C:\Program Files (x86)\WiX Toolset v3.11\bin",
+            "C:\Program Files\WiX Toolset v3.11\bin"
+          )
+          foreach ($p in $wixPaths) {
+            if (Test-Path $p) {
+              Write-Host "Adicionando WiX ao PATH: $p"
+              $p | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
+              break
+            }
+          }
+
+      - name: Validar versão da Tag contra o pom.xml
+        shell: pwsh
+        run: |
+          if (-not (Test-Path "pom.xml")) {
+            Write-Error "Arquivo pom.xml não encontrado!"
+            exit 1
+          }
+
+          [xml]$pom = Get-Content -Path "pom.xml" -Raw
+          $pomVersion = $pom.project.version
+          if ([string]::IsNullOrWhiteSpace($pomVersion)) {
+            Write-Error "Não foi possível extrair a versão do pom.xml!"
+            exit 1
+          }
+
+          $refName = "${{ github.ref_name }}"
+          $refType = "${{ github.ref_type }}"
+
+          Write-Host "Versão no pom.xml: $pomVersion"
+          Write-Host "Git Ref: $refName ($refType)"
+
+          if ($refType -eq "tag") {
+            $tagVersion = $refName -replace '^v', ''
+            if ($tagVersion -ne $pomVersion) {
+              Write-Error "ERRO DE VALIDAÇÃO: Divergência de versão detectada!`nTag Git: '$refName' (esperava versão '$tagVersion')`npom.xml define versão: '$pomVersion'`nPara lançar uma versão, certifique-se de que a tag corresponda exatamente à <version> do pom.xml."
+              exit 1
+            }
+            Write-Host "Validação bem-sucedida: Tag '$refName' coincide com pom.xml '$pomVersion'."
+            $releaseTag = $refName
+          } else {
+            Write-Host "Disparo manual via workflow_dispatch fora de tag. Usando release tag v$pomVersion."
+            $releaseTag = "v$pomVersion"
+          }
+
+          "RELEASE_TAG=$releaseTag" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+          "POM_VERSION=$pomVersion" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+
+      - name: Executar Build e Empacotamento
+        shell: pwsh
+        run: |
+          & .\packaging\build.ps1
+
+      - name: Listar artefatos gerados
+        shell: pwsh
+        run: |
+          Get-ChildItem -Path "dist" | Format-Table Name, Length, LastWriteTime
+
+      - name: Publicar Release no GitHub
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ env.RELEASE_TAG }}
+          name: Nasser Etiquetas ${{ env.RELEASE_TAG }}
+          generate_release_notes: true
+          files: |
+            dist/NasserEtiquetas-*-windows-portable.zip
+            dist/NasserEtiquetas-*-windows-installer.exe
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
